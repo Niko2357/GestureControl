@@ -3,9 +3,7 @@ import mediapipe as mp
 import math
 import pyautogui
 import time
-from comtypes import CLSCTX_ALL
-from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
-from Modules.SmartWatch import SmartWatch
+from Features.SmartWatch import SmartWatch
 
 W, H = 1280, 720
 

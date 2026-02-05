@@ -4,7 +4,7 @@ import numpy as np
 import math
 import random
 import time
-from Modules.SmartWatch import SmartWatch
+from Features.SmartWatch import SmartWatch
 
 W, H = 1280, 720
 

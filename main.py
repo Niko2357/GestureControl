@@ -1,11 +1,11 @@
 import eel
 # Importujeme naše třídy ze složky modules
-from Modules.VolumeControl import VolumeControl
-from Modules.Shooter import Shooter
-from Modules.KarateChop import KarateChop
+from Features.VolumeControl import VolumeControl
+from Games.Shooter import Shooter
+from Games.KarateChop import KarateChop
 
 # Inicializace Eelu
-eel.init('web')
+eel.init('app')
 
 
 @eel.expose
@@ -26,7 +26,6 @@ def spustit_katanu_py():
     app.run()
 
 
-# Spuštění
 if __name__ == "__main__":
     print("Spouštím GESTURE HUB...")
     try:

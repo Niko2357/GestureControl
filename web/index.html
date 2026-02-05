@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <title>Gesture Hub</title>
+    <link rel="stylesheet" href="style.css">
+    <script type="text/javascript" src="/eel.js"></script> </head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>GESTURE <span class="highlight">HUB</span></h1>
+            <p>AI CONTROL CENTER</p>
+        </div>
+
+        <div class="menu">
+
+            <div class="card" onclick="runVolume()">
+                <div class="icon">🔊</div>
+                <h2>Hlasitost</h2>
+                <p>Ovládání gesty & Hodinky</p>
+            </div>
+
+            <div class="card red" onclick="runShooter()">
+                <div class="icon">🔫</div>
+                <h2>Střelnice</h2>
+                <p>AI Hra na 60 sekund</p>
+            </div>
+
+            <div class="card purple" onclick="runKatana()">
+                <div class="icon">✋</div> <h2>Karate Chop</h2>
+                <p>Sekání ovoce rukou</p>
+            </div>
+
+        </div>
+
+        <div class="footer">
+            <p>TIP: Poklepáním na zápěstí zobrazíš čas.</p>
+            <button class="exit-btn" onclick="window.close()">UKONČIT</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

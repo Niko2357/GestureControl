@@ -1,121 +1,326 @@
+/* --- DEFINICE BAREV A PROMĚNNÝCH --- */
+:root {
+    --bg-color: #050505;
+    --neon-cyan: #00f3ff;
+    --neon-purple: #bd00ff;
+    --neon-red: #ff3c3c;
+    --text-color: #e0f7ff;
+    --card-bg: rgba(10, 10, 15, 0.8);
+    --font-header: 'Orbitron', sans-serif;
+    --font-tech: 'Share Tech Mono', monospace;
+}
+
 body {
-    background-color: #121212;
-    color: white;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: var(--font-tech);
     margin: 0;
     padding: 0;
-    display: flex;
-    justify_content: center;
-    height: 100vh;
-    user-select: none; /* Nelze označovat text */
+    min-height: 100vh;
+    user-select: none;
+    overflow-x: hidden;
+    /* Odstraněno centrování body, o layout se postará container */
 }
 
+/* --- POZADÍ A EFEKTY --- */
+.cyber-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-image:
+        linear-gradient(rgba(0, 243, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 243, 255, 0.05) 1px, transparent 1px);
+    background-size: 30px 30px;
+    background-position: center center;
+    opacity: 0.3;
+    z-index: -2;
+    perspective: 1000px;
+    transform: rotateX(10deg) scale(1.1);
+}
+
+.scanlines {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(to bottom, rgba(255,255,255,0) 50%, rgba(0,0,0,0.1) 51%);
+    background-size: 100% 4px;
+    pointer-events: none;
+    z-index: 10;
+    opacity: 0.6;
+}
+
+/* --- TOP NAVIGAČNÍ LIŠTA --- */
+.top-nav {
+    position: fixed;
+    top: 0; left: 0; width: 100%;
+    background: rgba(10, 10, 15, 0.95);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 15px 40px;
+    z-index: 100;
+    box-sizing: border-box;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+
+.nav-brand {
+    font-family: var(--font-header);
+    font-size: 18px;
+    letter-spacing: 2px;
+    color: var(--text-color);
+    text-transform: uppercase;
+}
+
+/* --- HLAVNÍ CONTAINER --- */
 .container {
     width: 100%;
-    max-width: 450px;
-    text-align: center;
-    padding: 20px;
+    max-width: 1200px;
+    margin: 60px auto 0; /* Zmenšeno odsazení od horní lišty z 80px na 60px */
+    padding: 20px 40px;  /* Zmenšen svislý padding */
+    position: relative;
+    z-index: 1;
+    box-sizing: border-box;
 }
 
-/* Nadpis */
-.header h1 {
-    font-size: 40px;
-    margin-bottom: 5px;
+.section-header {
+    margin-bottom: 15px; /* Zmenšena mezera pod nadpisem */
+}
+
+.section-header h2 {
+    font-family: var(--font-header);
+    font-size: 20px; /* Mírně zmenšený font nadpisu */
+    letter-spacing: 3px;
+    margin: 0 0 5px 0;
+    text-transform: uppercase;
+    text-shadow: 0 0 5px rgba(255,255,255,0.2);
+}
+
+.section-header .subtitle {
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
     letter-spacing: 2px;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 10px;
 }
 
-.header .highlight {
-    color: #00ff88; /* Neonová zelená */
-}
-
-.header p {
-    color: #888;
+.section-header p {
     font-size: 14px;
-    letter-spacing: 4px;
-    margin-top: 0;
+    color: rgba(224, 247, 255, 0.6);
+    margin: 0;
 }
 
-/* Karty (Tlačítka) */
-.menu {
+/* --- MŘÍŽKA KARET (GRID) --- */
+.grid-container {
     display: flex;
-    flex-direction: column;
-    gap: 15px;
-    margin-top: 40px;
+    flex-wrap: wrap; /* Zalamování karet na menších monitorech */
+    gap: 20px;
 }
 
-.card {
-    background: #1e1e1e;
-    border-radius: 15px;
-    padding: 20px;
+/* --- CYBER KARTY --- */
+.cyber-card {
+    background: var(--card-bg);
+    border: 1px solid;
+    border-radius: 8px;
+    padding: 15px; /* Zmenšený vnitřní prostor karet */
     cursor: pointer;
     transition: all 0.3s ease;
-    border: 1px solid #333;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    text-align: left;
+    justify-content: center;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(5px);
+    width: 210px; /* Lehce užší */
+    height: 120px; /* Snížená výška karet (původně 140px) */
+    box-sizing: border-box;
 }
 
-.card:hover {
-    transform: scale(1.05); /* Zvětšení při najetí */
-    background: #2a2a2a;
-    border-color: #00ff88;
-    box-shadow: 0 0 15px rgba(0, 255, 136, 0.2);
+.card-deco.top-left {
+    position: absolute;
+    top: 5px; left: 5px;
+    width: 10px; height: 10px;
+    border-top: 1px solid currentColor;
+    border-left: 1px solid currentColor;
+    opacity: 0.5;
 }
 
-.card .icon {
-    font-size: 30px;
-    margin-right: 20px;
-    background: #111;
-    width: 60px;
-    height: 60px;
-    display: flex;
-    align-items: center;
-    justify_content: center;
+.cyber-card h2 {
+    margin: 0;
+    font-family: var(--font-header);
+    font-size: 16px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.cyber-card p {
+    margin: 8px 0 15px;
+    color: rgba(224, 247, 255, 0.4);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Barvy karet */
+.cyber-card.cyan { border-color: rgba(0, 243, 255, 0.3); color: var(--neon-cyan); }
+.cyber-card.cyan:hover { border-color: var(--neon-cyan); box-shadow: 0 0 15px rgba(0, 243, 255, 0.2); transform: translateY(-3px); }
+
+.cyber-card.red { border-color: rgba(255, 60, 60, 0.3); color: var(--neon-red); }
+.cyber-card.red:hover { border-color: var(--neon-red); box-shadow: 0 0 15px rgba(255, 60, 60, 0.2); transform: translateY(-3px); }
+
+.cyber-card.purple { border-color: rgba(189, 0, 255, 0.3); color: var(--neon-purple); }
+.cyber-card.purple:hover { border-color: var(--neon-purple); box-shadow: 0 0 15px rgba(189, 0, 255, 0.2); transform: translateY(-3px); }
+
+/* --- PŘEPÍNAČE (TOGGLES) V SEKCI FEATURES --- */
+.cyber-switch {
+    position: relative;
+    display: inline-block;
+    width: 46px;
+    height: 22px;
+}
+
+.cyber-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(255,255,255,0.1);
+    transition: .4s;
+    border-radius: 34px;
+    border: 1px solid currentColor;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 14px; width: 14px;
+    left: 3px; bottom: 3px;
+    background-color: var(--text-color);
+    transition: .4s;
     border-radius: 50%;
 }
 
-.card h2 {
-    margin: 0;
-    font-size: 20px;
+input:checked + .slider.cyan-glow {
+    background-color: rgba(0, 243, 255, 0.2);
+    box-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
 }
 
-.card p {
-    margin: 5px 0 0;
-    color: #aaa;
-    font-size: 12px;
+input:checked + .slider:before {
+    transform: translateX(24px);
+    background-color: var(--neon-cyan);
+    box-shadow: 0 0 8px var(--neon-cyan);
 }
 
-/* Specifické barvy pro karty */
-.card.red:hover {
-    border-color: #ff4444;
-    box-shadow: 0 0 15px rgba(255, 68, 68, 0.2);
-}
-
-.card.purple:hover {
-    border-color: #d633ff;
-    box-shadow: 0 0 15px rgba(214, 51, 255, 0.2);
-}
-
-/* Patička */
+/* --- PATIČKA --- */
 .footer {
-    margin-top: 50px;
-    color: #555;
-    font-size: 12px;
+    margin-top: 30px; /* Výrazně zmenšená mezera nad patičkou (původně 80px) */
+    border-top: 1px dashed rgba(224, 247, 255, 0.1);
+    padding-top: 15px;
 }
 
-.exit-btn {
-    margin-top: 20px;
+.tech-tip {
+    color: rgba(224, 247, 255, 0.4);
+    font-size: 11px;
+    letter-spacing: 1px;
+}
+
+.cyber-button {
+    margin-top: 10px;
     background: transparent;
-    border: 1px solid #444;
-    color: #888;
+    border: 1px solid var(--neon-red);
+    color: var(--neon-red);
     padding: 10px 30px;
-    border-radius: 20px;
+    font-family: var(--font-header);
+    font-size: 12px;
+    letter-spacing: 2px;
     cursor: pointer;
-    transition: 0.3s;
+    transition: all 0.3s;
 }
 
-.exit-btn:hover {
-    background: #ff4444;
-    color: white;
-    border-color: #ff4444;
+.cyber-button:hover {
+    background: rgba(255, 60, 60, 0.1);
+    box-shadow: 0 0 15px rgba(255, 60, 60, 0.4);
+}
+
+/* --- VYSKAKOVACÍ OKNO (MODAL) - FINÁLNÍ VELKÁ VERZE --- */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+    padding: 20px; /* Ochranný okraj na velmi malých noteboocích */
+    box-sizing: border-box;
+}
+
+.modal-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+}
+
+.modal-content {
+    max-width: 800px;
+    width: 95%;
+    height: auto;
+    min-height: 350px;
+
+    max-height: none;
+    overflow: visible;
+
+    display: flex;
+    flex-direction: column;
+    padding: 40px;
+    box-shadow: 0 0 60px rgba(255, 60, 60, 0.4);
+    text-align: left;
+    background: #050505;
+    box-sizing: border-box;
+    border: 1px solid var(--neon-red);
+}
+
+.terminal-text-container {
+    margin: 30px 0; /* Větší mezera nad a pod textem */
+    border: 1px solid rgba(255, 60, 60, 0.2);
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.terminal-text {
+    font-size: 15px; /* Větší písmo pro lepší čitelnost */
+    color: rgba(224, 247, 255, 0.8);
+    line-height: 1.6; /* Pohodlné řádkování */
+    background: rgba(255, 60, 60, 0.05);
+    padding: 25px;    /* Více místa uvnitř terminálového bloku */
+    border-left: 3px solid var(--neon-red);
+    word-wrap: break-word;
+}
+
+.terminal-text p {
+    margin: 0 0 12px 0;
+    font-family: var(--font-tech);
+}
+
+.terminal-text ul {
+    list-style-type: square;
+    padding-left: 25px;
+    color: var(--neon-red);
+    margin: 0;
+}
+
+.terminal-text li {
+    margin-bottom: 8px;
+}
+
+.close-modal-btn {
+    align-self: flex-end; /* Tlačítko zarovnané doprava */
+    margin-top: 15px;
+    font-size: 14px; /* O něco větší tlačítko */
+    padding: 12px 35px;
 }

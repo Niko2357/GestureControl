@@ -19,7 +19,16 @@ class KarateChop:
 
     def run(self):
         print("--- SPUŠTĚNO: KARATE CHOP ---")
-        cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+        cap = None
+        for i in range(3):
+            temp_cap = cv2.VideoCapture(i, cv2.CAP_DSHOW)
+            if temp_cap.isOpened():
+                success, _ = temp_cap.read()
+                if success:
+                    cap = temp_cap
+                    break
+                else:
+                    temp_cap.release()
         cap.set(3, W)
         cap.set(4, H)
 

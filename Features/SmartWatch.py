@@ -9,7 +9,7 @@ class SmartWatch:
     """Třída pro detekci gesta hodinek."""
 
     @staticmethod
-    def zkontroluj(img, results, draw_surface=None):
+    def check_time(img, results, draw_surface=None):
         if draw_surface is None:
             draw_surface = img
 

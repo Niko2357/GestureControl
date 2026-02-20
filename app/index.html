@@ -1,45 +1,129 @@
 <!DOCTYPE html>
-<html lang="cs">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Gesture Hub</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gesture Control</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <script type="text/javascript" src="/eel.js"></script> </head>
+</head>
 <body>
 
+    <div class="cyber-overlay"></div>
+    <div class="scanlines"></div>
+
+    <nav class="top-nav">
+        <span class="nav-brand">Gesture Control</span>
+    </nav>
+
     <div class="container">
-        <div class="header">
-            <h1>GESTURE <span class="highlight">HUB</span></h1>
-            <p>AI CONTROL CENTER</p>
+
+        <div class="section-container">
+            <div class="section-header">
+                <h2>GAMES</h2>
+                <span class="subtitle">INSTALLED MODULES</span>
+                <p>Select a game module below.</p>
+            </div>
+
+            <div class="grid-container">
+                <div class="card cyber-card red" onclick="runShooter()">
+                    <div class="card-deco top-left"></div>
+                    <div class="card-content">
+                        <h2>SHOOTER RANGE</h2>
+                        <p>[ MODULE_01 ]</p>
+                    </div>
+                </div>
+
+                <div class="card cyber-card purple" onclick="runKatana()">
+                    <div class="card-deco top-left"></div>
+                    <div class="card-content">
+                        <h2>KARATE CHOP</h2>
+                        <p>[ MODULE_02 ]</p>
+                    </div>
+                </div>
+
+                <div class="card cyber-card cyan" onclick="runBubble()">
+                    <div class="card-deco top-left"></div>
+                    <div class="card-content">
+                        <h2>BUBBLE CATCHER</h2>
+                        <p>[ MODULE_03 ]</p>
+                    </div>
+                </div>
+
+                <div class="card cyber-card red" onclick="runRPS()">
+                    <div class="card-deco top-left"></div>
+                    <div class="card-content">
+                        <h2>R.P.S. GAME</h2>
+                        <p>[ MODULE_04 ]</p>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="menu">
-
-            <div class="card" onclick="runVolume()">
-                <div class="icon">🔊</div>
-                <h2>Hlasitost</h2>
-                <p>Ovládání gesty & Hodinky</p>
+        <div class="section-container" style="margin-top: 25px;">
+            <div class="section-header">
+                <h2>FEATURES</h2>
+                <p>Toggle cybernetic systems on or off.</p>
             </div>
 
-            <div class="card red" onclick="runShooter()">
-                <div class="icon">🔫</div>
-                <h2>Střelnice</h2>
-                <p>AI Hra na 60 sekund</p>
+            <div class="grid-container">
+                <div class="card cyber-card cyan feature-card">
+                    <div class="card-deco top-left"></div>
+                    <div class="card-content">
+                        <h2>VOLUME CONTROL</h2>
+                        <p>[ F_01 ]</p>
+                        <label class="cyber-switch">
+                            <input type="checkbox" onchange="runVolume()" id="volumeToggle">
+                            <span class="slider cyan-glow"></span>
+                        </label>
+                    </div>
+                </div>
+                <div class="card cyber-card cyan feature-card">
+                    <div class="card-deco top-left"></div>
+                    <div class="card-content">
+                        <h2>SMART WATCH</h2>
+                        <p>[ F_02 ]</p>
+                        <label class="cyber-switch">
+                            <input type="checkbox" onchange="runWatch()" id="watches">
+                            <span class="slider cyan-glow"></span>
+                        </label>
+                    </div>
+                </div>
             </div>
-
-            <div class="card purple" onclick="runKatana()">
-                <div class="icon">✋</div> <h2>Karate Chop</h2>
-                <p>Sekání ovoce rukou</p>
-            </div>
-
         </div>
 
         <div class="footer">
-            <p>TIP: Poklepáním na zápěstí zobrazíš čas.</p>
-            <button class="exit-btn" onclick="window.close()">UKONČIT</button>
+            <p class="tech-tip">:: SYSTEM_TIP :: Tap wrist to activate chronometer (if available).</p>
+            <button class="exit-btn cyber-button" onclick="window.close()">
+                <span class="btn-text">DISCONNECT SYSTEM</span>
+            </button>
         </div>
     </div>
 
+    <div id="cameraModal" class="modal-overlay hidden" onclick="closeModalOnOutsideClick(event)">
+        <div class="modal-content cyber-card red">
+            <h2 style="color: var(--neon-red); text-shadow: 0 0 10px var(--neon-red);">[ CRITICAL ERROR ]</h2>
+            <h3>OPTICAL SENSOR NOT FOUND</h3>
+
+            <div class="terminal-text-container">
+                <div class="terminal-text">
+                    <p>> Gesture tracking initialization failed...</p>
+                    <p>> Connection diagnostics suggest solutions:</p>
+                    <ul>
+                        <li>Physically check USB camera connection.</li>
+                        <li>Ensure camera is not blocked by another app (Zoom, Teams, etc.).</li>
+                        <li>Enable camera access in Windows Privacy Settings.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <button class="cyber-button close-modal-btn" onclick="closeModal()">
+                <span class="btn-text">END DIAGNOSTICS</span>
+            </button>
+        </div>
+    </div>
+
+    <script type="text/javascript" src="/eel.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

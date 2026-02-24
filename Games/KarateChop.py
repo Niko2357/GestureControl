@@ -12,13 +12,12 @@ W, H = 1280, 720
 class KarateChop:
     def __init__(self):
         self.mpHands = mp.solutions.hands
-        # Potřebujeme jen jednu ruku na sekání, ale povolíme 2 pro hodinky
         self.hands = self.mpHands.Hands(static_image_mode=False, max_num_hands=2, min_detection_confidence=0.7)
         self.mpDraw = mp.solutions.drawing_utils
         self.max_lives = 3
 
     def run(self):
-        print("--- SPUŠTĚNO: KARATE CHOP ---")
+        print("--- LAUNCHED: KARATE CHOP ---")
         cap = None
         for i in range(3):
             temp_cap = cv2.VideoCapture(i, cv2.CAP_DSHOW)
@@ -29,17 +28,24 @@ class KarateChop:
                     break
                 else:
                     temp_cap.release()
+
+        if cap is None:
+            print("CRITICAL: Camera not found!")
+            return 0
+
         cap.set(3, W)
         cap.set(4, H)
 
-        # Herní proměnné
-        fruits = []  # [x, y, rychlost, typ(0=ovoce, 1=bomba), barva, velikost]
+        # Game Variables
+        # Format: [x, y, velocity_x, velocity_y, is_bomb, color, size]
+        fruits = []
         score = 0
         lives = self.max_lives
         game_over = False
         start_time = time.time()
         last_spawn_time = time.time()
-        spawn_rate = 1.0  # Každou vteřinu nové ovoce (bude se zrychlovat)
+        spawn_rate = 1.0
+        gravity = 1.2  # Physics: Pulls objects down every frame
 
         while True:
             success, img = cap.read()
@@ -48,139 +54,127 @@ class KarateChop:
             imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             results = self.hands.process(imgRGB)
 
-            # Černé herní pozadí (AR styl - vidíš jen ovoce a svou ruku)
-            # Pokud chceš vidět sebe, zakomentuj tento řádek a používej 'img'
+            # Black background (AR style)
             game_board = np.zeros((H, W, 3), np.uint8)
-            # Pokud chceš vidět kameru, odkomentuj toto a zakomentuj řádek výše:
-            # game_board = img.copy()
 
-            # Chytré hodinky (vykreslit na herní plochu)
-            SmartWatch.zkontroluj(img, results, draw_surface=game_board)
+            SmartWatch.check_time(img, results, draw_surface=game_board)
 
             if not game_over:
-                # --- 1. RUKA JAKO ČEPEL ---
-                blade_line = None  # (x1, y1, x2, y2)
+                # --- 1. BLADE DETECTION (PINKY FINGER) ---
+                blade_line = None
 
                 if results.multi_hand_landmarks:
                     for handLms in results.multi_hand_landmarks:
-                        # Vykreslíme ruku (aby hráč viděl, čím seká)
                         self.mpDraw.draw_landmarks(game_board, handLms, self.mpHands.HAND_CONNECTIONS)
 
-                        # Definice Čepele: Čára od Zápěstí (0) k Prostředníčku (12)
-                        # To simuluje hranu dlaně pro karate chop
+                        # Define Blade: From Wrist (0) to Pinky Tip (20)
                         wx, wy = int(handLms.landmark[0].x * W), int(handLms.landmark[0].y * H)
-                        mx, my = int(handLms.landmark[12].x * W), int(handLms.landmark[12].y * H)
+                        px, py = int(handLms.landmark[20].x * W), int(handLms.landmark[20].y * H)
 
-                        # Uložíme si čepel pro kontrolu kolize
-                        blade_line = (wx, wy, mx, my)
+                        blade_line = (wx, wy, px, py)
 
-                        # Vykreslení čepele (zářivá čára)
-                        cv2.line(game_board, (wx, wy), (mx, my), (255, 255, 255), 5)  # Jádro
-                        cv2.line(game_board, (wx, wy), (mx, my), (0, 255, 255), 15)  # Záře
+                        # Draw the blade glowing effect
+                        cv2.line(game_board, (wx, wy), (px, py), (255, 255, 255), 5)  # Core
+                        cv2.line(game_board, (wx, wy), (px, py), (0, 255, 255), 15)  # Glow
 
-                # --- 2. GENERUJEME OVOCE ---
+                # --- 2. FRUIT SPAWN (THROWN UPWARDS) ---
                 if time.time() - last_spawn_time > spawn_rate:
-                    # Náhodná pozice X
-                    fx = random.randint(50, W - 50)
-                    fy = -50  # Začíná nad obrazovkou
-                    fspeed = random.randint(8, 15)  # Rychlost pádu
-                    fsize = random.randint(30, 50)
+                    fsize = random.randint(40, 60)
+                    fx = random.randint(150, W - 150)
+                    fy = H + 50  # Spawns BELOW the screen
 
-                    # 10% šance na bombu
-                    is_bomb = 1 if random.random() < 0.1 else 0
+                    # Physics parameters for the throw
+                    vx = random.uniform(-6, 6)  # Drift left or right
+                    vy = random.uniform(-28, -38)  # Strong upward force
 
-                    # Barva: Bomba=Černá/Červená, Ovoce=Náhodná
+                    is_bomb = 1 if random.random() < 0.15 else 0
+
                     if is_bomb:
-                        color = (50, 50, 50)  # Tmavě šedá
+                        color = (50, 50, 50)  # Dark grey bomb
                     else:
                         color = (random.randint(50, 255), random.randint(50, 255), random.randint(50, 255))
 
-                    fruits.append([fx, fy, fspeed, is_bomb, color, fsize])
+                    fruits.append([fx, fy, vx, vy, is_bomb, color, fsize])
 
                     last_spawn_time = time.time()
-                    # Zrychlování hry
-                    spawn_rate = max(0.4, spawn_rate * 0.98)
+                    spawn_rate = max(0.4, spawn_rate * 0.98)  # Speeds up over time
 
-                # --- 3. POHYB A KOLIZE ---
-                for f in fruits[:]:  # Iterujeme přes kopii, abychom mohli mazat
-                    # Pohyb dolů
-                    f[1] += f[2]
+                # --- 3. PHYSICS & COLLISION ---
+                for f in fruits[:]:
+                    # Apply gravity and movement
+                    f[3] += gravity  # vy increases (becomes positive/downward) over time
+                    f[0] += f[2]  # move x
+                    f[1] += f[3]  # move y
 
-                    # Souřadnice ovoce
-                    fx, fy, fspeed, is_bomb, color, fsize = f
+                    fx_curr, fy_curr, vx, vy, is_bomb, color, fsize = f
 
                     hit = False
 
-                    # Kontrola kolize s čepelí
+                    # Check collision with the Pinky blade
                     if blade_line:
                         x1, y1, x2, y2 = blade_line
-                        # Zjednodušená kolize: Zkontrolujeme vzdálenost středu ovoce od úsečky ruky
-                        # 1. Spočítáme vzdálenost bodu (fx,fy) od přímky
-                        # Matika: distance = |Ax + By + C| / sqrt(A^2 + B^2)
 
-                        # Vektor ruky
-                        px = x2 - x1
-                        py = y2 - y1
-                        norm = px * px + py * py
-
-                        if norm > 0:  # Abychom nedělili nulou
-                            u = ((fx - x1) * px + (fy - y1) * py) / float(norm)
-
-                            if u > 0 and u < 1:  # Bod kolmice leží na úsečce ruky (ne mimo)
-                                x_closest = x1 + u * px
-                                y_closest = y1 + u * py
-                                dist = math.hypot(x_closest - fx, y_closest - fy)
-
-                                if dist < fsize:  # ZÁSAH!
-                                    hit = True
-
-                        # Záložní kolize (kdyby matika selhala nebo pro špičku prstu)
-                        # Pokud je ovoce blízko špičky prstu (mx, my)
-                        if math.hypot(mx - fx, my - fy) < fsize + 20:
+                        # Direct collision with the Pinky tip
+                        if math.hypot(x2 - fx_curr, y2 - fy_curr) < fsize + 20:
                             hit = True
+                        else:
+                            # Advanced line collision (distance from point to line segment)
+                            px_vec = x2 - x1
+                            py_vec = y2 - y1
+                            norm = px_vec * px_vec + py_vec * py_vec
+
+                            if norm > 0:
+                                u = ((fx_curr - x1) * px_vec + (fy_curr - y1) * py_vec) / float(norm)
+                                if 0 < u < 1:
+                                    x_closest = x1 + u * px_vec
+                                    y_closest = y1 + u * py_vec
+                                    dist = math.hypot(x_closest - fx_curr, y_closest - fy_curr)
+
+                                    if dist < fsize:
+                                        hit = True
 
                     if hit:
                         fruits.remove(f)
                         if is_bomb:
-                            # GAME OVER EFEKT
                             game_over = True
-                            cv2.circle(game_board, (fx, fy), 100, (0, 0, 255), cv2.FILLED)  # Výbuch
+                            cv2.circle(game_board, (int(fx_curr), int(fy_curr)), 100, (0, 0, 255),
+                                       cv2.FILLED)  # Explosion
                         else:
-                            # Zásah ovoce
                             score += 10
-                            # Efekt rozseknutí (bílá čára)
-                            cv2.circle(game_board, (fx, fy), fsize + 10, (255, 255, 255), cv2.FILLED)
+                            cv2.circle(game_board, (int(fx_curr), int(fy_curr)), fsize + 15, (255, 255, 255),
+                                       cv2.FILLED)  # Slash effect
 
-                    # Pokud ovoce propadne dolů
-                    elif fy > H + 50:
+                    # Remove if it falls back down off screen
+                    elif fy_curr > H + 100 and vy > 0:
                         fruits.remove(f)
-                        if not is_bomb:  # Pokud nám spadlo dobré ovoce -> ztráta života
+                        if not is_bomb:
                             lives -= 1
-                            if lives == 0: game_over = True
+                            if lives <= 0: game_over = True
 
-                    # Vykreslení ovoce
+                    # Draw the object
                     else:
-                        cv2.circle(game_board, (fx, fy), fsize, color, cv2.FILLED)
-                        # Odlesk na ovoci (aby vypadalo 3D)
-                        cv2.circle(game_board, (fx - 10, fy - 10), fsize // 3, (255, 255, 255), cv2.FILLED)
+                        cv2.circle(game_board, (int(fx_curr), int(fy_curr)), fsize, color, cv2.FILLED)
+                        cv2.circle(game_board, (int(fx_curr) - 10, int(fy_curr) - 10), fsize // 3, (255, 255, 255),
+                                   cv2.FILLED)  # Highlight
                         if is_bomb:
-                            # Nakreslit "X" na bombu
-                            cv2.line(game_board, (fx - 15, fy - 15), (fx + 15, fy + 15), (0, 0, 255), 3)
-                            cv2.line(game_board, (fx + 15, fy - 15), (fx - 15, fy + 15), (0, 0, 255), 3)
+                            cv2.line(game_board, (int(fx_curr) - 15, int(fy_curr) - 15),
+                                     (int(fx_curr) + 15, int(fy_curr) + 15), (0, 0, 255), 4)
+                            cv2.line(game_board, (int(fx_curr) + 15, int(fy_curr) - 15),
+                                     (int(fx_curr) - 15, int(fy_curr) + 15), (0, 0, 255), 4)
 
                 # --- HUD ---
-                cv2.putText(game_board, f"SKORE: {score}", (30, 60), cv2.FONT_HERSHEY_DUPLEX, 1.5, (255, 255, 255), 2)
+                cv2.putText(game_board, f"SCORE: {score}", (30, 60), cv2.FONT_HERSHEY_DUPLEX, 1.5, (255, 255, 255), 2)
 
-                # Životy (Srdíčka)
+                # Draw Lives
                 for i in range(lives):
                     cv2.circle(game_board, (W - 50 - (i * 40), 50), 15, (0, 0, 255), cv2.FILLED)
 
             else:
                 # GAME OVER SCREEN
                 cv2.putText(game_board, "GAME OVER", (W // 2 - 300, H // 2), cv2.FONT_HERSHEY_DUPLEX, 4, (0, 0, 255), 5)
-                cv2.putText(game_board, f"Skore: {score}", (W // 2 - 150, H // 2 + 80), cv2.FONT_HERSHEY_DUPLEX, 2,
-                            (255, 255, 255), 2)
-                cv2.putText(game_board, "Q = Menu", (W // 2 - 100, H // 2 + 150), cv2.FONT_HERSHEY_PLAIN, 2,
+                cv2.putText(game_board, f"Final Score: {score}", (W // 2 - 180, H // 2 + 80), cv2.FONT_HERSHEY_DUPLEX,
+                            2, (255, 255, 255), 2)
+                cv2.putText(game_board, "Press 'Q' to exit", (W // 2 - 120, H // 2 + 150), cv2.FONT_HERSHEY_PLAIN, 2,
                             (150, 150, 150), 2)
 
             cv2.imshow("Karate Chop", game_board)
@@ -189,3 +183,4 @@ class KarateChop:
 
         cap.release()
         cv2.destroyAllWindows()
+        return score

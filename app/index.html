@@ -57,7 +57,23 @@
                         <p>[ MODULE_04 ]</p>
                     </div>
                 </div>
-            </div>
+
+                <div class="card cyber-card purple" onclick="runMeme()">
+                    <div class="card-deco top-left"></div>
+                    <div class="card-content">
+                        <h2>MEME MATCH</h2>
+                        <p>[ MODULE_05 ]</p>
+                    </div>
+                </div>
+
+                <div class="card cyber-card cyan" onclick="runCanvas()">
+                    <div class="card-deco top-left"></div>
+                    <div class="card-content">
+                        <h2>AIR CANVAS</h2>
+                        <p>[ MODULE_06 ]</p>
+                    </div>
+                </div>
+
         </div>
 
         <div class="section-container" style="margin-top: 25px;">
@@ -78,19 +94,63 @@
                         </label>
                     </div>
                 </div>
-                <div class="card cyber-card cyan feature-card">
+                <div class="card cyber-card red feature-card">
                     <div class="card-deco top-left"></div>
                     <div class="card-content">
-                        <h2>SMART WATCH</h2>
+                        <h2>SMARTWATCH</h2>
                         <p>[ F_02 ]</p>
                         <label class="cyber-switch">
-                            <input type="checkbox" onchange="runWatch()" id="watches">
+                            <input type="checkbox" onchange="runSmartWatch()" id="smartwatchToggle">
                             <span class="slider cyan-glow"></span>
                         </label>
                     </div>
                 </div>
+                <div class="cyber-card cyan">
+                    <div class="card-deco top-left"></div>
+                    <div class="card-content">
+                        <h2>MOUSE CONTROL</h2>
+                        <p>[ F_03 ]</p>
+                        <label class="cyber-switch">
+                        <input type="checkbox" id="mouseToggle" onchange="runMouse()">
+                        <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+                <div class="card cyber-card purple" onclick="runCameraView()">
+                    <div class="card-deco top-left"></div>
+                    <div class="card-content">
+                        <h2>CAMERA VIEW</h2>
+                        <p>[ SYS_CALIBRATE ]</p>
+                    </div>
+                </div>
+
+                <div class="cyber-card red">
+                    <div class="card-deco top-left"></div>
+                    <div class="card-content">
+                        <h2>PRESENTATION SWIPE</h2>
+                        <p>[ F_04 ]</p>
+                        <label class="cyber-switch">
+                        <input type="checkbox" id="presentationToggle" onchange="runPresentation()">
+                        <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="cyber-card purple">
+                    <div class="card-deco top-left"></div>
+                    <div class="card-content">
+                        <h2>MACRO LINKS</h2>
+                        <p style="cursor: pointer; color: var(--neon-purple);" onclick="openMacroConfig()">[ CONFIGURE ]</p>
+                        <label class="cyber-switch">
+                        <input type="checkbox" id="macroToggle" onchange="runMacros()">
+                        <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
             </div>
+
         </div>
+    </div>
 
         <div class="footer">
             <p class="tech-tip">:: SYSTEM_TIP :: Tap wrist to activate chronometer (if available).</p>
@@ -123,6 +183,45 @@
         </div>
     </div>
 
+    <div id="cameraPreviewModal" class="modal-overlay hidden">
+        <div class="modal-content cyber-card purple" style="max-width: 700px; text-align: center;">
+            <div class="card-deco top-left"></div>
+            <h2 style="color: var(--neon-purple); margin-bottom: 10px;">[ ALIGNMENT FEED ]</h2>
+            <p style="color: rgba(224, 247, 255, 0.6); margin-bottom: 20px;">Please align your body and face within the center frame.</p>
+
+            <div style="position: relative; display: inline-block; border: 2px solid var(--neon-purple); border-radius: 5px; overflow: hidden; background: #000; min-height: 480px; width: 640px;">
+                <img id="cam-preview" src="" style="width: 100%; height: 100%; display: block;">
+            </div>
+
+            <button class="cyber-button" onclick="closeCameraView()" style="margin-top: 25px; border-color: var(--neon-purple); color: var(--neon-purple);">
+                <span class="btn-text">CLOSE & SAVE ALIGNMENT</span>
+            </button>
+        </div>
+    </div>
+    <div id="macroConfigModal" class="modal-overlay hidden">
+        <div class="modal-content cyber-card purple" style="max-width: 500px; text-align: left;">
+            <div class="card-deco top-left"></div>
+            <h2 style="color: var(--neon-purple); margin-bottom: 15px;">[ MACRO CONFIGURATION ]</h2>
+            <p style="color: rgba(224, 247, 255, 0.6); margin-bottom: 20px;">Assign URLs or App paths to hand gestures.</p>
+
+            <label style="color: white; font-size: 12px;">✌️ VICTORY GESTURE:</label>
+            <input type="text" id="link1" placeholder="www.youtube.com" style="background: #111; border: 1px solid var(--neon-purple); color: white; padding: 10px; width: 100%; margin-bottom: 15px; box-sizing: border-box; font-family: var(--font-main);">
+
+            <label style="color: white; font-size: 12px;">👍 THUMBS UP GESTURE:</label>
+            <input type="text" id="link2" placeholder="www.google.com" style="background: #111; border: 1px solid var(--neon-purple); color: white; padding: 10px; width: 100%; margin-bottom: 15px; box-sizing: border-box; font-family: var(--font-main);">
+
+            <label style="color: white; font-size: 12px;">🤘 ROCK ON GESTURE:</label>
+            <input type="text" id="link3" placeholder="netflix.com" style="background: #111; border: 1px solid var(--neon-purple); color: white; padding: 10px; width: 100%; margin-bottom: 25px; box-sizing: border-box; font-family: var(--font-main);">
+
+            <button class="cyber-button" onclick="saveMacroConfig()" style="border-color: var(--neon-purple); color: var(--neon-purple); width: 100%;">
+            SAVE & APPLY
+            </button>
+        </div>
+    </div>
+
+    <div id="scoreModal" class="modal-overlay hidden">
+
+    </div>
     <script type="text/javascript" src="/eel.js"></script>
     <script src="script.js"></script>
 </body>

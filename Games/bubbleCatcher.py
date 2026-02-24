@@ -103,5 +103,5 @@ def run():
 
     cap.release()
     cv2.destroyAllWindows()
-
+    return skore
 

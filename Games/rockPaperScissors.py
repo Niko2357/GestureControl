@@ -175,3 +175,4 @@ def run():
                 timer = time.time()
     cap.release()
     cv2.destroyAllWindows()
+    return skore

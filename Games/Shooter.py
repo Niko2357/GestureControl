@@ -46,7 +46,7 @@ class Shooter:
             results = self.hands.process(imgRGB)
             game_board = np.zeros((H, W, 3), np.uint8)
 
-            SmartWatch.zkontroluj(img, results, draw_surface=game_board)
+            SmartWatch.check_time(img, results, draw_surface=game_board)
             time_left = max(0, int(self.game_duration - (time.time() - start_time)))
             if time_left == 0: game_over = True
 
@@ -130,3 +130,4 @@ class Shooter:
             if cv2.waitKey(1) & 0xFF == ord('q'): break
         cap.release()
         cv2.destroyAllWindows()
+        return skore

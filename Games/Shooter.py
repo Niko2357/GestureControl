@@ -5,6 +5,8 @@ import math
 import time
 import random
 from Features.SmartWatch import SmartWatch
+import base64
+import eel
 
 W, H = 1280, 720
 
@@ -40,7 +42,8 @@ class Shooter:
 
         while True:
             success, img = cap.read()
-            if not success: break
+            if not success:
+                break
             img = cv2.flip(img, 1)
             imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             results = self.hands.process(imgRGB)
@@ -48,7 +51,8 @@ class Shooter:
 
             SmartWatch.check_time(img, results, draw_surface=game_board)
             time_left = max(0, int(self.game_duration - (time.time() - start_time)))
-            if time_left == 0: game_over = True
+            if time_left == 0:
+                game_over = True
 
             if not game_over:
                 cv2.line(game_board, (0, H // 2), (W, H // 2), (30, 30, 30), 1)
@@ -126,8 +130,23 @@ class Shooter:
                 cv2.putText(game_board, "Stiskni Q pro menu", (W // 2 - 150, H // 2 + 120), cv2.FONT_HERSHEY_PLAIN, 1.5,
                             (150, 150, 150), 1)
 
-            cv2.imshow("AI Shooter", game_board)
-            if cv2.waitKey(1) & 0xFF == ord('q'): break
+            _, buffer = cv2.imencode('.jpg', game_board)
+            b64_str = base64.b64encode(buffer).decode('utf-8')
+            try:
+                eel.update_camera_frame(b64_str)()
+            except Exception:
+                pass
+            cv2.waitKey(1)
+
+            if game_over:
+                _, buffer = cv2.imencode('.jpg', game_board)
+                b64_str = base64.b64encode(buffer).decode('utf-8')
+                try:
+                    eel.update_camera_frame(b64_str)()
+                except:
+                    pass
+                time.sleep(2)
+                break
         cap.release()
         cv2.destroyAllWindows()
         return skore

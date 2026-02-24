@@ -64,7 +64,9 @@ def toggle_camera_view_py(state):
 
 @eel.expose
 def check_camera_py():
-    return True
+    if engine is not None:
+        return engine.is_running
+    return False
 
 
 # --- 3. STANDALONE GAMES ---
@@ -149,4 +151,4 @@ def get_leaderboard_py(game):
 # --- 4. START THE APP ---
 if __name__ == '__main__':
     print("--- STARTING GESTURE HUB ---")
-    eel.start('index.html', size=(1200, 800))
+    eel.start('index.html', cmdline_args=['--start-maximized'])

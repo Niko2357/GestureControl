@@ -25,6 +25,33 @@ function closeModalOnOutsideClick(event) {
     }
 }
 
+// 1. Zaregistrování funkce, aby ji Python mohl zavolat
+eel.expose(update_camera_frame);
+function update_camera_frame(base64_str) {
+    let img = document.getElementById('cam-preview');
+    if (img) {
+        img.src = "data:image/jpeg;base64," + base64_str;
+    }
+}
+
+// 2. Otevření modálního okna a zapnutí streamu
+async function runCameraView() {
+    let isOnline = await eel.check_camera_py()();
+    if (isOnline) {
+        document.getElementById('cameraPreviewModal').classList.remove('hidden');
+        eel.toggle_camera_view_py(true)(); // Zapne stream v Pythonu
+    } else {
+        alert("Kamera je odpojená!"); // Nebo tvoje červená error hláška
+    }
+}
+
+// 3. Zavření okna a vypnutí streamu (aby se šetřil výkon)
+function closeCameraView() {
+    document.getElementById('cameraPreviewModal').classList.add('hidden');
+    document.getElementById('cam-preview').src = "";
+    eel.toggle_camera_view_py(false)(); // Vypne stream v Pythonu
+}
+
 // --- HERNÍ FUNKCE ---
 
 async function runShooter() {
@@ -61,25 +88,6 @@ async function runSmartWatch() {
     eel.toggle_smartwatch_py(isChecked)();
 }
 
-// Odesílání snímků pro kameru
-eel.expose(update_camera_frame);
-async function update_camera_frame(base64_str) {
-    let img = document.getElementById('cam-preview');
-    if (img) { img.src = "data:image/jpeg;base64," + base64_str; }
-}
-
-// Funkce pro zapnutí/vypnutí náhledu kamery
-async function runCameraView() {
-    document.getElementById('cameraPreviewModal').classList.remove('hidden');
-    eel.toggle_camera_view_py(true)(); // Zapne v Pythonu
-}
-
-async function closeCameraView() {
-    document.getElementById('cameraPreviewModal').classList.add('hidden');
-    document.getElementById('cam-preview').src = "";
-    eel.toggle_camera_view_py(false)(); // Vypne v Pythonu
-}
-
 // Funkce pro přepínač hlasitosti
 async function runVolume() {
     // Najde tvůj přepínač a zjistí, jestli je zaškrtnutý (True/False)
@@ -96,9 +104,14 @@ async function runMouse() {
 let currentGameForScore = "";
 let currentScore = 0;
 
-// Upravená funkce pro spuštění hry (Příklad pro Střelnici)
 async function runShooter() {
-    let score = await eel.run_shooter_py();
+    document.getElementById('cameraPreviewModal').classList.remove('hidden');
+    document.getElementById('cam-preview').src = "";
+
+    let score = await eel.run_shooter_py()();
+
+    document.getElementById('cameraPreviewModal').classList.add('hidden');
+
     if (score > 0) {
         currentGameForScore = "Shooter";
         currentScore = score;
@@ -159,3 +172,35 @@ async function saveMacroConfig() {
     eel.save_macro_links_py(l1, l2, l3)();
     document.getElementById('macroConfigModal').classList.add('hidden');
 }
+
+// --- KAMERA STATUS ---
+async function updateCameraStatus() {
+    try {
+        let isOnline = await eel.check_camera_py()();
+        let statusBox = document.getElementById("camera-status");
+        let dot = document.getElementById("cam-dot");
+        let text = document.getElementById("cam-text");
+
+        if (isOnline) {
+            // Přepne CSS na zelený neon
+            statusBox.className = "cyber-cam-status online";
+            dot.className = "cam-dot-online";
+            text.innerText = "CAM ONLINE";
+        } else {
+            // Přepne CSS na červený neon
+            statusBox.className = "cyber-cam-status offline";
+            dot.className = "cam-dot-offline";
+            text.innerText = "CAM OFFLINE";
+        }
+    } catch (e) {
+        // Pokud spojení s Pythonem úplně spadne
+        let statusBox = document.getElementById("camera-status");
+        statusBox.className = "cyber-cam-status offline";
+        document.getElementById("cam-dot").className = "cam-dot-offline";
+        document.getElementById("cam-text").innerText = "SYS ERROR";
+    }
+}
+
+// Intervaly zůstávají stejné
+setInterval(updateCameraStatus, 2000);
+updateCameraStatus();

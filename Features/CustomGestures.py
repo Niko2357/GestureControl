@@ -11,6 +11,9 @@ class CustomGestures:
         self.last_trigger_time = 0
         self.current_message = ""
         self.message_time = 0
+        self.is_tracking_up = False
+        self.start_y = None
+        self.swipe_threshold = 0.2
 
     def update_links(self, link1, link2, link3):
         self.links = [link1, link2, link3]
@@ -36,18 +39,40 @@ class CustomGestures:
         return fingers
 
     def process_frame(self, img, results):
-        # Display confirmation message on screen for 2 seconds
         if time.time() - self.message_time < 2.0:
             h, w, _ = img.shape
             cv2.putText(img, self.current_message, (w // 2 - 200, 50), cv2.FONT_HERSHEY_DUPLEX, 1.0, (0, 255, 255), 2)
 
-        # If in cooldown, ignore gestures
         if time.time() - self.last_trigger_time < self.cooldown:
             return
 
         if results.multi_hand_landmarks:
             for handLms in results.multi_hand_landmarks:
                 fingers = self.check_fingers(handLms)
+
+                fingers = self.check_fingers(handLms)
+
+                # --- DYNAMICKÉ GESTO: Klávesnice (Swipe Up) ---
+                wrist = handLms.landmark[0]
+
+                if not self.is_tracking_up:
+                    self.start_y = wrist.y
+                    self.is_tracking_up = True
+                else:
+                    dy = wrist.y - self.start_y
+                    if dy < -self.swipe_threshold:
+                        try:
+                            import os
+                            os.system("osk")
+                            self.current_message = "[ VIRTUAL KEYBOARD ]"
+                            self.message_time = time.time()
+                            self.last_trigger_time = time.time()
+                        except:
+                            pass
+                        self.is_tracking_up = False
+                        break
+                    elif dy > 0.05:
+                        self.start_y = wrist.y
 
                 triggered_index = -1
                 gesture_name = ""

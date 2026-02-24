@@ -20,7 +20,7 @@ class AirCanvas:
         self.xp, self.yp = 0, 0
 
         # The blank canvas where lines are drawn
-        self.imgCanvas = np.zeros((720, 1280, 3), np.uint8)
+        self.imgCanvas = None
 
     def run(self):
         print("--- LAUNCHED: AIR CANVAS ---")
@@ -44,9 +44,13 @@ class AirCanvas:
 
         while True:
             success, img = cap.read()
-            if not success: break
+            if not success:
+                break
 
             # Flip image for intuitive drawing
+            if self.imgCanvas is None or self.imgCanvas.shape[:2] != img.shape[:2]:
+                self.imgCanvas = np.zeros_like(img)
+
             img = cv2.flip(img, 1)
 
             # Draw the color palette UI at the top

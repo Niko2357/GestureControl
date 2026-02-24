@@ -3,6 +3,7 @@ import mediapipe as mp
 import pyautogui
 import math
 import numpy as np
+import os
 
 
 class MouseControl:
@@ -23,7 +24,7 @@ class MouseControl:
         self.smooth_x, self.smooth_y = 0, 0
         self.smoothing = 5
         self.frame_reduction = 100
-        self.click_threshold = 30
+        self.click_threshold = 40
         self.clicked = False
 
     def process_frame(self, img, results):

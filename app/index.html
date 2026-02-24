@@ -6,15 +6,21 @@
     <title>Gesture Control</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="robotic-hand.png">
 </head>
 <body>
 
     <div class="cyber-overlay"></div>
     <div class="scanlines"></div>
 
-    <nav class="top-nav">
-        <span class="nav-brand">Gesture Control</span>
-    </nav>
+    <header style="display: flex; justify-content: space-between; align-items: center; padding: 10px 20px 10px 30px; border-bottom: 2px solid rgba(255,255,255,0.1); margin-bottom: 15px; height: 60px;">
+
+        <h1 style="color: white; font-family: var(--font-main); letter-spacing: 2px; margin: 0; font-size: 28px; display: flex; align-items: center; height: 100%;">GESTURE CONTROL</h1>
+        <div id="camera-status" class="cyber-cam-status online" style="font-size: 28px; padding: 0 15px; display: flex; align-items: center; gap: 15px; height: 100%; background: transparent; border: none; font-weight: bold; letter-spacing: 2px;">
+            <span id="cam-dot" class="cam-dot-online" style="width: 14px; height: 14px;"></span>
+            <span id="cam-text">CAM ONLINE</span>
+        </div>
+    </header>
 
     <div class="container">
 
@@ -29,7 +35,7 @@
                 <div class="card cyber-card red" onclick="runShooter()">
                     <div class="card-deco top-left"></div>
                     <div class="card-content">
-                        <h2>SHOOTER RANGE</h2>
+                        <h2>SHOOTING RANGE</h2>
                         <p>[ MODULE_01 ]</p>
                     </div>
                 </div>

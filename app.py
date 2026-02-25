@@ -10,7 +10,7 @@ import Features.Leaderboard as LB
 import Games.MatchMeme as MatchMeme
 import Games.AirCanvas as AirCanvas
 
-eel.init('.')
+eel.init('app')
 
 # --- 1. CORE ENGINE SETUP ---
 engine = CoreEngine()

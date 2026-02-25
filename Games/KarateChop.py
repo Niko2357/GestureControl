@@ -5,6 +5,8 @@ import math
 import random
 import time
 from Features.SmartWatch import SmartWatch
+import base64
+import eel
 
 W, H = 1280, 720
 
@@ -16,7 +18,7 @@ class KarateChop:
         self.mpDraw = mp.solutions.drawing_utils
         self.max_lives = 3
 
-    def run(self):
+    def run(self, should_quit=None):
         print("--- LAUNCHED: KARATE CHOP ---")
         cap = None
         for i in range(3):
@@ -48,13 +50,16 @@ class KarateChop:
         gravity = 1.2  # Physics: Pulls objects down every frame
 
         while True:
+            if should_quit and should_quit():
+                print("Hra byla přerušena uživatelem.")
+                break
             success, img = cap.read()
-            if not success: break
+            if not success:
+                break
             img = cv2.flip(img, 1)
             imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             results = self.hands.process(imgRGB)
 
-            # Black background (AR style)
             game_board = np.zeros((H, W, 3), np.uint8)
 
             SmartWatch.check_time(img, results, draw_surface=game_board)
@@ -177,8 +182,17 @@ class KarateChop:
                 cv2.putText(game_board, "Press 'Q' to exit", (W // 2 - 120, H // 2 + 150), cv2.FONT_HERSHEY_PLAIN, 2,
                             (150, 150, 150), 2)
 
-            cv2.imshow("Karate Chop", game_board)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
+            _, buffer = cv2.imencode('.jpg', game_board)
+            b64_str = base64.b64encode(buffer).decode('utf-8')
+            try:
+                eel.update_camera_frame(b64_str)()
+            except Exception:
+                pass
+
+            cv2.waitKey(1)
+
+            if game_over:
+                time.sleep(2)
                 break
 
         cap.release()

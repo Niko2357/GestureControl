@@ -1,12 +1,13 @@
 import cv2
 import numpy as np
 import mediapipe as mp
+import base64
+import eel
 
 
 class AirCanvas:
     def __init__(self):
         self.mpHands = mp.solutions.hands
-        # High confidence needed so the brush doesn't jump around
         self.hands = self.mpHands.Hands(max_num_hands=1, min_detection_confidence=0.85)
         self.mpDraw = mp.solutions.drawing_utils
 
@@ -22,7 +23,7 @@ class AirCanvas:
         # The blank canvas where lines are drawn
         self.imgCanvas = None
 
-    def run(self):
+    def run(self, should_quit=None):
         print("--- LAUNCHED: AIR CANVAS ---")
         cap = None
         for i in range(5):
@@ -43,6 +44,8 @@ class AirCanvas:
         cap.set(4, 720)
 
         while True:
+            if should_quit and should_quit():
+                break
             success, img = cap.read()
             if not success:
                 break

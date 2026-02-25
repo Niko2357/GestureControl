@@ -1,36 +1,51 @@
 import cv2
 import webbrowser
 import time
+import json
+import os
+
+CONFIG_FILE = "macro_config.json"
 
 
 class CustomGestures:
     def __init__(self):
-        # Default empty links (0: Victory, 1: Thumbs Up, 2: Rock On)
         self.links = ["", "", ""]
-        self.cooldown = 3.0  # Wait 3 seconds before another gesture can be triggered
+        self.load_links()  # Při startu hned načte uložené odkazy
+
+        self.cooldown = 3.0
         self.last_trigger_time = 0
         self.current_message = ""
         self.message_time = 0
+
+        # Proměnné pro dynamické gesto "Pojď ke mně" (Klávesnice)
         self.is_tracking_up = False
         self.start_y = None
-        self.swipe_threshold = 0.2
+        self.swipe_threshold = 0.2  # Ruka musí urazit 20% výšky obrazovky nahoru
+
+    def load_links(self):
+        """Načte uložené odkazy ze souboru, pokud existuje."""
+        if os.path.exists(CONFIG_FILE):
+            try:
+                with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+                    self.links = json.load(f)
+            except:
+                pass
 
     def update_links(self, link1, link2, link3):
+        """Uloží nové odkazy do souboru."""
         self.links = [link1, link2, link3]
-        print("--- MACRO GESTURES UPDATED ---")
+        with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+            json.dump(self.links, f)
+        print("--- MACRO LINKS SAVED ---")
 
     def check_fingers(self, hand_landmarks):
         tip_ids = [4, 8, 12, 16, 20]
         fingers = []
-
-        # Thumb: check if tip is higher than the lower knuckle
         if hand_landmarks.landmark[4].y < hand_landmarks.landmark[3].y and hand_landmarks.landmark[4].y < \
                 hand_landmarks.landmark[5].y:
             fingers.append(1)
         else:
             fingers.append(0)
-
-        # Other 4 fingers
         for id in range(1, 5):
             if hand_landmarks.landmark[tip_ids[id]].y < hand_landmarks.landmark[tip_ids[id] - 2].y:
                 fingers.append(1)
@@ -50,11 +65,8 @@ class CustomGestures:
             for handLms in results.multi_hand_landmarks:
                 fingers = self.check_fingers(handLms)
 
-                fingers = self.check_fingers(handLms)
-
-                # --- DYNAMICKÉ GESTO: Klávesnice (Swipe Up) ---
+                # --- DYNAMICKÉ GESTO: Virtuální Klávesnice (Ruka jede nahoru) ---
                 wrist = handLms.landmark[0]
-
                 if not self.is_tracking_up:
                     self.start_y = wrist.y
                     self.is_tracking_up = True
@@ -62,7 +74,6 @@ class CustomGestures:
                     dy = wrist.y - self.start_y
                     if dy < -self.swipe_threshold:
                         try:
-                            import os
                             os.system("osk")
                             self.current_message = "[ VIRTUAL KEYBOARD ]"
                             self.message_time = time.time()
@@ -74,32 +85,24 @@ class CustomGestures:
                     elif dy > 0.05:
                         self.start_y = wrist.y
 
+                # --- STATICKÁ GESTA (Odkazy) ---
                 triggered_index = -1
                 gesture_name = ""
 
-                # 1. VICTORY (Index and Middle)
                 if fingers == [0, 1, 1, 0, 0]:
                     triggered_index = 0
                     gesture_name = "[ VICTORY ]"
-
-                # 2. THUMBS UP (Only Thumb)
                 elif fingers == [1, 0, 0, 0, 0]:
                     triggered_index = 1
                     gesture_name = "[ THUMBS UP ]"
-
-                # 3. ROCK ON (Index and Pinky up)
                 elif fingers[1] == 1 and fingers[2] == 0 and fingers[3] == 0 and fingers[4] == 1:
                     triggered_index = 2
                     gesture_name = "[ ROCK ON ]"
 
-                # If a valid gesture is made AND a link is assigned to it
                 if triggered_index != -1 and self.links[triggered_index] != "":
                     link = self.links[triggered_index]
-
-                    # Ensure it's a valid URL format
                     if not link.startswith("http") and "." in link:
                         link = "https://" + link
-
                     try:
                         webbrowser.open(link)
                         self.current_message = f"EXECUTING: {gesture_name}"
@@ -108,4 +111,3 @@ class CustomGestures:
                         break
                     except Exception as e:
                         print("Error opening link:", e)
-

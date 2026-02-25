@@ -276,6 +276,35 @@ input:checked + .slider:before {
     box-shadow: 0 0 8px var(--neon-cyan);
 }
 
+/* --- TLAČÍTKO NÁPOVĚDY (TUTORIÁL) --- */
+.tutorial-btn {
+    position: absolute;
+    bottom: 12px;      /* Přesunuto úplně dolů */
+    right: 12px;       /* Přilepeno vpravo */
+    color: rgba(255, 255, 255, 0.5);
+    background: rgba(10, 10, 15, 0.95); /* Tmavé pozadí zůstává pro profi vzhled */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    font-family: var(--font-tech);
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 50;
+    padding: 4px 8px;
+}
+
+.tutorial-btn:hover {
+    color: var(--text-color);
+    border-color: currentColor;
+    box-shadow: 0 0 10px currentColor;
+    transform: scale(1.05);
+}
+
+.cyber-card.cyan .tutorial-btn:hover { color: var(--neon-cyan); }
+.cyber-card.red .tutorial-btn:hover { color: var(--neon-red); }
+.cyber-card.purple .tutorial-btn:hover { color: var(--neon-purple); }
+
 /* --- PATIČKA --- */
 .footer {
     margin-top: 30px; /* Výrazně zmenšená mezera nad patičkou (původně 80px) */

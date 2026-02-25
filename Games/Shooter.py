@@ -20,7 +20,7 @@ class Shooter:
         self.game_duration = 60
         self.max_naboju = 6
 
-    def run(self):
+    def run(self, should_quit=None):
         print("--- SPUŠTĚNO: AI STŘELNICE ---")
         cap = None
         for i in range(3):
@@ -32,6 +32,11 @@ class Shooter:
                     break
                 else:
                     temp_cap.release()
+
+        if cap is None:
+            print("CRITICAL: Camera not found!")
+            return 0
+
         cap.set(3, W)
         cap.set(4, H)
         targets, last_target_time = [], time.time()
@@ -41,6 +46,10 @@ class Shooter:
         trigger_active = False
 
         while True:
+            # OKAMŽITÉ UKONČENÍ POMOCÍ KLÁVESY 'Q' Z WEBU
+            if should_quit and should_quit():
+                break
+
             success, img = cap.read()
             if not success:
                 break
@@ -78,7 +87,7 @@ class Shooter:
                                 cv2.circle(game_board, ((x1 + x2) // 2, (y1 + y2) // 2), 15, (0, 255, 0), cv2.FILLED)
                             elif dist > 100:
                                 trigger_active, reload_command = False, True
-                                cv2.putText(game_board, "PREBIJIM", (wx, int(handLms.landmark[0].y * H) + 50),
+                                cv2.putText(game_board, "LOADING", (wx, int(handLms.landmark[0].y * H) + 50),
                                             cv2.FONT_HERSHEY_PLAIN, 1.5, (0, 255, 255), 2)
                             else:
                                 trigger_active = False
@@ -95,7 +104,7 @@ class Shooter:
                             break
                 if reload_command and nabito < self.max_naboju:
                     nabito = self.max_naboju
-                    cv2.putText(game_board, "NABITO!", (aim_x, aim_y - 50), cv2.FONT_HERSHEY_PLAIN, 2, (0, 255, 0), 2)
+                    cv2.putText(game_board, "LOADED!", (aim_x, aim_y - 50), cv2.FONT_HERSHEY_PLAIN, 2, (0, 255, 0), 2)
 
                 if len(targets) < self.max_targets and time.time() - last_target_time > spawn_rate:
                     size = random.randint(40, 70)
@@ -115,38 +124,31 @@ class Shooter:
 
                 cv2.line(game_board, (aim_x - 20, aim_y), (aim_x + 20, aim_y), (0, 255, 0), 2)
                 cv2.line(game_board, (aim_x, aim_y - 20), (aim_x, aim_y + 20), (0, 255, 0), 2)
-                cv2.putText(game_board, f"CAS: {time_left}", (W // 2 - 100, 60), cv2.FONT_HERSHEY_DUPLEX, 2,
+                cv2.putText(game_board, f"TIME: {time_left}", (W // 2 - 100, 60), cv2.FONT_HERSHEY_DUPLEX, 2,
                             (0, 255, 0) if time_left > 10 else (0, 0, 255), 3)
-                cv2.putText(game_board, f"SKORE: {skore}", (30, 60), cv2.FONT_HERSHEY_DUPLEX, 1.5, (255, 255, 255), 2)
+                cv2.putText(game_board, f"SCORE: {skore}", (30, 60), cv2.FONT_HERSHEY_DUPLEX, 1.5, (255, 255, 255), 2)
                 for i in range(self.max_naboju):
                     c = (0, 255, 255) if i < nabito else (50, 50, 50)
                     cv2.rectangle(game_board, (W - 180 + (i * 25), H - 60), (W - 180 + (i * 25) + 15, H - 20), c,
                                   cv2.FILLED)
             else:
-                cv2.putText(game_board, "GAME OVER", (W // 2 - 300, H // 2 - 50), cv2.FONT_HERSHEY_DUPLEX, 4,
+                cv2.putText(game_board, "GAME OVER", (W // 2 - 200, H // 2 - 50), cv2.FONT_HERSHEY_DUPLEX, 4,
                             (0, 0, 255), 5)
-                cv2.putText(game_board, f"Skore: {skore}", (W // 2 - 150, H // 2 + 50), cv2.FONT_HERSHEY_DUPLEX, 2,
+                cv2.putText(game_board, f"Score: {skore}", (W // 2 - 100, H // 2 + 50), cv2.FONT_HERSHEY_DUPLEX, 2,
                             (255, 255, 255), 2)
-                cv2.putText(game_board, "Stiskni Q pro menu", (W // 2 - 150, H // 2 + 120), cv2.FONT_HERSHEY_PLAIN, 1.5,
-                            (150, 150, 150), 1)
 
             _, buffer = cv2.imencode('.jpg', game_board)
             b64_str = base64.b64encode(buffer).decode('utf-8')
             try:
-                eel.update_camera_frame(b64_str)()
+                eel.update_game_frame(b64_str)()
             except Exception:
                 pass
+
             cv2.waitKey(1)
 
             if game_over:
-                _, buffer = cv2.imencode('.jpg', game_board)
-                b64_str = base64.b64encode(buffer).decode('utf-8')
-                try:
-                    eel.update_camera_frame(b64_str)()
-                except:
-                    pass
                 time.sleep(2)
                 break
+
         cap.release()
-        cv2.destroyAllWindows()
         return skore

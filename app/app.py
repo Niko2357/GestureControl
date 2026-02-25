@@ -4,8 +4,8 @@ import time
 from CoreEngine import CoreEngine
 from Games import Shooter as Shooter
 from Games import KarateChop as KarateChop
-import Games.bubbleCatcher as bubbleCatcher
-import Games.rockPaperScissors as rockPaperScissors
+import Games.BubbleCatcher as bubbleCatcher
+import Games.RockPaperScissors as rockPaperScissors
 import Features.Leaderboard as LB
 import Games.MatchMeme as MatchMeme
 import Games.AirCanvas as AirCanvas
@@ -65,59 +65,71 @@ def toggle_camera_view_py(state):
 @eel.expose
 def check_camera_py():
     if engine is not None:
-        return engine.is_running
+        return getattr(engine, 'camera_active', False)
     return False
 
 
 # --- 3. STANDALONE GAMES ---
 @eel.expose
 def run_shooter_py():
+    global game_quit_flag
+    game_quit_flag = False
     stop_engine()
     game = Shooter.Shooter()
-    final_score = game.run()
+    final_score = game.run(should_quit)
     restart_engine()
-    return final_score
+    return final_score if not game_quit_flag else 0
 
 
 @eel.expose
 def run_karate_py():
+    global game_quit_flag
+    game_quit_flag = False
     stop_engine()
     game = KarateChop.KarateChop()
-    final_score = game.run()
+    final_score = game.run(should_quit)
     restart_engine()
-    return final_score
+    return final_score if not game_quit_flag else 0
 
 
 @eel.expose
 def run_bubble_py():
+    global game_quit_flag
+    game_quit_flag = False
     stop_engine()
-    final_score = bubbleCatcher.run()
+    final_score = bubbleCatcher.run(should_quit)
     restart_engine()
-    return final_score
+    return final_score if not game_quit_flag else 0
 
 
 @eel.expose
 def run_rps_py():
+    global game_quit_flag
+    game_quit_flag = False
     stop_engine()
-    final_score = rockPaperScissors.run()
+    final_score = rockPaperScissors.run(should_quit)
     restart_engine()
-    return final_score
+    return final_score if not game_quit_flag else 0
 
 
 @eel.expose
 def run_meme_py():
+    global game_quit_flag
+    game_quit_flag = False
     stop_engine()
     game = MatchMeme.MatchMeme()
-    final_score = game.run()
+    final_score = game.run(should_quit)
     restart_engine()
-    return final_score
+    return final_score if not game_quit_flag else 0
 
 
 @eel.expose
 def run_canvas_py():
+    global game_quit_flag
+    game_quit_flag = False
     stop_engine()
     canvas = AirCanvas.AirCanvas()
-    canvas.run()
+    canvas.run(should_quit)
     restart_engine()
 
 
@@ -130,6 +142,11 @@ def toggle_macros_py(state):
 @eel.expose
 def save_macro_links_py(l1, l2, l3):
     engine.macro_module.update_links(l1, l2, l3)
+
+
+@eel.expose
+def get_macro_links_py():
+    return engine.macro_module.links
 
 
 @eel.expose
@@ -146,6 +163,20 @@ def save_score_py(game, name, p_class, score):
 @eel.expose
 def get_leaderboard_py(game):
     return LB.get_top_scores(game)
+
+
+game_quit_flag = False
+
+
+@eel.expose
+def quit_game_py():
+    global game_quit_flag
+    game_quit_flag = True
+    print("--- UŽIVATEL VYNUTIL UKONČENÍ HRY (KLÁVESA Q) ---")
+
+
+def should_quit():
+    return game_quit_flag
 
 
 # --- 4. START THE APP ---

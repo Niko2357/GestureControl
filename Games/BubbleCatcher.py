@@ -3,9 +3,11 @@ import mediapipe as mp
 import random
 import time
 import math
+import base64
+import eel
 
 
-def run():
+def run(should_quit=None):
     cap = None
     for i in range(3):
         temp_cap = cv2.VideoCapture(i, cv2.CAP_DSHOW)
@@ -40,10 +42,13 @@ def run():
     print("Hra začíná! Praskej bubliny ukazováčkem.")
 
     while True:
+        if should_quit and should_quit():
+            break
         success, img = cap.read()
-        if not success: break
+        if not success:
+            break
 
-        # Zrcadlové otočení obrazu (aby se ti lépe ovládalo)
+        # Zrcadlové otočení obrazu
         img = cv2.flip(img, 1)
         imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         results = hands.process(imgRGB)

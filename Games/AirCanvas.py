@@ -8,6 +8,7 @@ import eel
 class AirCanvas:
     def __init__(self):
         self.mpHands = mp.solutions.hands
+        # High confidence needed so the brush doesn't jump around
         self.hands = self.mpHands.Hands(max_num_hands=1, min_detection_confidence=0.85)
         self.mpDraw = mp.solutions.drawing_utils
 
@@ -44,8 +45,10 @@ class AirCanvas:
         cap.set(4, 720)
 
         while True:
+            # OKAMŽITÉ UKONČENÍ POMOCÍ KLÁVESY 'Q' Z WEBU
             if should_quit and should_quit():
                 break
+
             success, img = cap.read()
             if not success:
                 break
@@ -88,14 +91,12 @@ class AirCanvas:
                         x1, y1 = lmList[8][1:]  # Index finger tip
                         x2, y2 = lmList[12][1:]  # Middle finger tip
 
-                        # Check which fingers are up
                         fingers = []
-                        # Index
                         if lmList[8][2] < lmList[6][2]:
                             fingers.append(1)
                         else:
                             fingers.append(0)
-                        # Middle
+
                         if lmList[12][2] < lmList[10][2]:
                             fingers.append(1)
                         else:
@@ -117,8 +118,7 @@ class AirCanvas:
                                 elif 800 < x1 < 1000:
                                     self.color_index = 3
                                 elif 1050 < x1 < 1230:
-                                    # Clear canvas
-                                    self.imgCanvas = np.zeros((720, 1280, 3), np.uint8)
+                                    self.imgCanvas = np.zeros_like(img)
 
                         # --- DRAWING MODE (Only Index finger up) ---
                         elif fingers[0] and not fingers[1]:
@@ -139,8 +139,6 @@ class AirCanvas:
                                          self.brush_thickness)
 
                             self.xp, self.yp = x1, y1
-
-            # Overlay the canvas onto the camera feed
             imgGray = cv2.cvtColor(self.imgCanvas, cv2.COLOR_BGR2GRAY)
             _, imgInv = cv2.threshold(imgGray, 50, 255, cv2.THRESH_BINARY_INV)
             imgInv = cv2.cvtColor(imgInv, cv2.COLOR_GRAY2BGR)
@@ -148,12 +146,14 @@ class AirCanvas:
             img = cv2.bitwise_and(img, imgInv)
             img = cv2.bitwise_or(img, self.imgCanvas)
 
-            cv2.putText(img, "Press 'Q' to exit", (10, 700), cv2.FONT_HERSHEY_PLAIN, 1.5, (0, 0, 255), 2)
-            cv2.imshow("Air Canvas", img)
+            _, buffer = cv2.imencode('.jpg', img)
+            b64_str = base64.b64encode(buffer).decode('utf-8')
+            try:
+                eel.update_game_frame(b64_str)()
+            except Exception:
+                pass
 
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
+            cv2.waitKey(1)
 
         cap.release()
-        cv2.destroyAllWindows()
 

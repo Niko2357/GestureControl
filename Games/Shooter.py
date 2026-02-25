@@ -18,10 +18,10 @@ class Shooter:
         self.smoothing = 2.0
         self.max_targets = 12
         self.game_duration = 60
-        self.max_naboju = 6
+        self.max_ammo = 6
 
     def run(self, should_quit=None):
-        print("--- SPUŠTĚNO: AI STŘELNICE ---")
+        print("--- LAUNCHED: SHOOTING RANGE ---")
         cap = None
         for i in range(3):
             temp_cap = cv2.VideoCapture(i, cv2.CAP_DSHOW)
@@ -40,13 +40,14 @@ class Shooter:
         cap.set(3, W)
         cap.set(4, H)
         targets, last_target_time = [], time.time()
-        spawn_rate, skore, nabito = 2.0, 0, self.max_naboju
+        spawn_rate, score, ammo = 2.0, 0, self.max_ammo
         start_time, game_over = time.time(), False
         prev_aim_x, prev_aim_y = W // 2, H // 2
         trigger_active = False
 
+        frame_counter = 0
+
         while True:
-            # OKAMŽITÉ UKONČENÍ POMOCÍ KLÁVESY 'Q' Z WEBU
             if should_quit and should_quit():
                 break
 
@@ -56,6 +57,7 @@ class Shooter:
             img = cv2.flip(img, 1)
             imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             results = self.hands.process(imgRGB)
+
             game_board = np.zeros((H, W, 3), np.uint8)
 
             SmartWatch.check_time(img, results, draw_surface=game_board)
@@ -72,12 +74,12 @@ class Shooter:
                 if results.multi_hand_landmarks:
                     for handLms in results.multi_hand_landmarks:
                         wx = int(handLms.landmark[0].x * W)
-                        if wx > W // 2:
+                        if wx > W // 2:  # Pravá ruka pro míření
                             ix, iy = int(handLms.landmark[5].x * W), int(handLms.landmark[5].y * H)
                             aim_x = int(prev_aim_x + (ix - prev_aim_x) / self.smoothing)
                             aim_y = int(prev_aim_y + (iy - prev_aim_y) / self.smoothing)
                             prev_aim_x, prev_aim_y = aim_x, aim_y
-                        else:
+                        else:  # Levá ruka pro střelbu
                             t_tip, i_tip = handLms.landmark[4], handLms.landmark[8]
                             x1, y1 = int(t_tip.x * W), int(t_tip.y * H)
                             x2, y2 = int(i_tip.x * W), int(i_tip.y * H)
@@ -87,23 +89,23 @@ class Shooter:
                                 cv2.circle(game_board, ((x1 + x2) // 2, (y1 + y2) // 2), 15, (0, 255, 0), cv2.FILLED)
                             elif dist > 100:
                                 trigger_active, reload_command = False, True
-                                cv2.putText(game_board, "LOADING", (wx, int(handLms.landmark[0].y * H) + 50),
+                                cv2.putText(game_board, "RELOADING", (wx, int(handLms.landmark[0].y * H) + 50),
                                             cv2.FONT_HERSHEY_PLAIN, 1.5, (0, 255, 255), 2)
                             else:
                                 trigger_active = False
 
-                if shoot_command and nabito > 0:
-                    nabito -= 1
+                if shoot_command and ammo > 0:
+                    ammo -= 1
                     cv2.circle(game_board, (aim_x, aim_y), 40, (255, 255, 255), cv2.FILLED)
                     for i in range(len(targets) - 1, -1, -1):
                         tx, ty, _, _, size, _ = targets[i]
                         if math.sqrt((aim_x - tx) ** 2 + (aim_y - ty) ** 2) < size:
                             del targets[i]
-                            skore += 100
+                            score += 100
                             cv2.circle(game_board, (tx, ty), size + 15, (0, 255, 255), cv2.FILLED)
                             break
-                if reload_command and nabito < self.max_naboju:
-                    nabito = self.max_naboju
+                if reload_command and ammo < self.max_ammo:
+                    ammo = self.max_ammo
                     cv2.putText(game_board, "LOADED!", (aim_x, aim_y - 50), cv2.FONT_HERSHEY_PLAIN, 2, (0, 255, 0), 2)
 
                 if len(targets) < self.max_targets and time.time() - last_target_time > spawn_rate:
@@ -126,23 +128,29 @@ class Shooter:
                 cv2.line(game_board, (aim_x, aim_y - 20), (aim_x, aim_y + 20), (0, 255, 0), 2)
                 cv2.putText(game_board, f"TIME: {time_left}", (W // 2 - 100, 60), cv2.FONT_HERSHEY_DUPLEX, 2,
                             (0, 255, 0) if time_left > 10 else (0, 0, 255), 3)
-                cv2.putText(game_board, f"SCORE: {skore}", (30, 60), cv2.FONT_HERSHEY_DUPLEX, 1.5, (255, 255, 255), 2)
-                for i in range(self.max_naboju):
-                    c = (0, 255, 255) if i < nabito else (50, 50, 50)
+                cv2.putText(game_board, f"SCORE: {score}", (30, 60), cv2.FONT_HERSHEY_DUPLEX, 1.5, (255, 255, 255), 2)
+                for i in range(self.max_ammo):
+                    c = (0, 255, 255) if i < ammo else (50, 50, 50)
                     cv2.rectangle(game_board, (W - 180 + (i * 25), H - 60), (W - 180 + (i * 25) + 15, H - 20), c,
                                   cv2.FILLED)
             else:
                 cv2.putText(game_board, "GAME OVER", (W // 2 - 200, H // 2 - 50), cv2.FONT_HERSHEY_DUPLEX, 4,
                             (0, 0, 255), 5)
-                cv2.putText(game_board, f"Score: {skore}", (W // 2 - 100, H // 2 + 50), cv2.FONT_HERSHEY_DUPLEX, 2,
+                cv2.putText(game_board, f"Score: {score}", (W // 2 - 100, H // 2 + 50), cv2.FONT_HERSHEY_DUPLEX, 2,
                             (255, 255, 255), 2)
 
-            _, buffer = cv2.imencode('.jpg', game_board)
-            b64_str = base64.b64encode(buffer).decode('utf-8')
-            try:
-                eel.update_game_frame(b64_str)()
-            except Exception:
-                pass
+            # --- POSÍLÁNÍ DO WEBU pomoci AI ---
+            frame_counter += 1
+            if frame_counter % 2 == 0:  # Odesílá do webu jen každý 2. snímek
+                # 1. Zmenšíme obraz na polovinu (web si ho roztáhne)
+                small_board = cv2.resize(game_board, (640, 360))
+                # 2. Zkomprimujeme JPEG na 60 % kvality
+                _, buffer = cv2.imencode('.jpg', small_board, [cv2.IMWRITE_JPEG_QUALITY, 60])
+                b64_str = base64.b64encode(buffer).decode('utf-8')
+                try:
+                    eel.update_game_frame(b64_str)()
+                except Exception:
+                    pass
 
             cv2.waitKey(1)
 
@@ -151,4 +159,5 @@ class Shooter:
                 break
 
         cap.release()
-        return skore
+        return score
+    

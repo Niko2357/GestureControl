@@ -73,56 +73,80 @@ async function showScoreModal(gameName, score) {
 // --- HERNÍ FUNKCE (S KONTROLOU KAMERY!) ---
 // ==========================================
 
+// ==========================================
+// --- HERNÍ FUNKCE (S KONTROLOU KAMERY!) ---
+// ==========================================
+
+let currentGameForScore = "";
+let currentScore = 0;
+
 async function runShooter() {
-    if (!(await eel.check_camera_py())) { showCameraError(); return; }
+    if (!(await eel.check_camera_py()())) { showCameraError(); return; }
 
     document.getElementById('gameTitle').innerText = "[ SHOOTING RANGE ]";
     document.getElementById('gameModal').classList.remove('hidden');
     document.getElementById('game-stream').src = "";
 
-    let score = await eel.run_shooter_py();
+    let score = await eel.run_shooter_py()(); // OPRAVENO: Volá opravdového shootera se správnými závorkami!
 
     document.getElementById('gameModal').classList.add('hidden');
-    if (score > 0) showScoreModal("SHOOTING RANGE", score);
+    if (score > 0) {
+        currentGameForScore = "SHOOTING RANGE";
+        currentScore = score;
+        document.getElementById("finalScoreDisplay").innerText = "SCORE: " + score;
+        document.getElementById("scoreModal").classList.remove("hidden");
+    }
 }
 
 async function runKarate() {
-    if (!(await eel.check_camera_py())) { showCameraError(); return; }
-
+    if (!(await eel.check_camera_py()())) { showCameraError(); return; }
     document.getElementById('gameTitle').innerText = "[ KARATE CHOP ]";
     document.getElementById('gameModal').classList.remove('hidden');
     document.getElementById('game-stream').src = "";
 
-    let score = await eel.run_karate_py();
+    let score = await eel.run_karate_py()();
 
     document.getElementById('gameModal').classList.add('hidden');
-    if (score > 0) showScoreModal("KARATE CHOP", score);
+    if (score > 0) {
+        currentGameForScore = "KARATE CHOP";
+        currentScore = score;
+        document.getElementById("finalScoreDisplay").innerText = "SCORE: " + score;
+        document.getElementById("scoreModal").classList.remove("hidden");
+    }
 }
 
 async function runBubble() {
-    if (!(await eel.check_camera_py())) { showCameraError(); return; }
-
+    if (!(await eel.check_camera_py()())) { showCameraError(); return; }
     document.getElementById('gameTitle').innerText = "[ BUBBLE CATCHER ]";
     document.getElementById('gameModal').classList.remove('hidden');
     document.getElementById('game-stream').src = "";
 
-    let score = await eel.run_bubble_py();
+    let score = await eel.run_bubble_py()();
 
     document.getElementById('gameModal').classList.add('hidden');
-    if (score > 0) showScoreModal("BUBBLE CATCHER", score);
+    if (score > 0) {
+        currentGameForScore = "BUBBLE CATCHER";
+        currentScore = score;
+        document.getElementById("finalScoreDisplay").innerText = "SCORE: " + score;
+        document.getElementById("scoreModal").classList.remove("hidden");
+    }
 }
 
 async function runRPS() {
-    if (!(await eel.check_camera_py())) { showCameraError(); return; }
-
+    if (!(await eel.check_camera_py()())) { showCameraError(); return; }
     document.getElementById('gameTitle').innerText = "[ R.P.S. GAME ]";
     document.getElementById('gameModal').classList.remove('hidden');
     document.getElementById('game-stream').src = "";
 
-    let score = await eel.run_rps_py();
+    let score = await eel.run_rps_py()();
 
     document.getElementById('gameModal').classList.add('hidden');
-    if (score > 0) showScoreModal("R.P.S. GAME", score);
+    if (score > 0) {
+        currentGameForScore = "R.P.S. GAME";
+        currentScore = score;
+        document.getElementById("finalScoreDisplay").innerText = "SCORE: " + score;
+        document.getElementById("scoreModal").classList.remove("hidden");
+    }
 }
 
 async function runMeme() {

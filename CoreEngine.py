@@ -118,7 +118,12 @@ class CoreEngine:
                 cv2.line(img, (cx, cy - 30), (cx, cy + 30), (0, 255, 0), 2)
                 cv2.line(img, (cx - 30, cy), (cx + 30, cy), (0, 255, 0), 2)
 
-                _, buffer = cv2.imencode('.jpg', img)
+                # --- OPTIMALIZACE OBRAZU ZDE ---
+                # 1. Zmenšíme obraz pro rychlý přenos do webu
+                small_cam = cv2.resize(img, (640, 360))
+                # 2. Zkomprimujeme JPEG na 60 %
+                _, buffer = cv2.imencode('.jpg', small_cam, [cv2.IMWRITE_JPEG_QUALITY, 60])
+
                 b64_str = base64.b64encode(buffer).decode('utf-8')
                 try:
                     eel.update_camera_frame(b64_str)()

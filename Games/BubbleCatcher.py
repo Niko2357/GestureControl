@@ -7,7 +7,6 @@ import base64
 import eel
 
 def run(should_quit=None):
-    print("--- LAUNCHED: BUBBLE CATCHER ---")
     cap = None
     for i in range(3):
         temp_cap = cv2.VideoCapture(i, cv2.CAP_DSHOW)
@@ -33,6 +32,8 @@ def run(should_quit=None):
     target_radius = 40
     target_color = (0, 165, 255)
 
+    frame_counter = 0
+
     while True:
         if should_quit and should_quit():
             break
@@ -46,7 +47,6 @@ def run(should_quit=None):
         h, w, c = img.shape
 
         index_finger_tip = None
-
         if results.multi_hand_landmarks:
             for handLms in results.multi_hand_landmarks:
                 mpDraw.draw_landmarks(img, handLms, mpHands.HAND_CONNECTIONS)
@@ -60,11 +60,9 @@ def run(should_quit=None):
         if zbyvajici_cas > 0:
             cv2.circle(img, (target_x, target_y), target_radius, target_color, cv2.FILLED)
             cv2.circle(img, (target_x, target_y), target_radius + 5, (255, 255, 255), 2)
-
             if index_finger_tip:
                 fx, fy = index_finger_tip
                 vzdalenost = math.sqrt((fx - target_x) ** 2 + (fy - target_y) ** 2)
-
                 if vzdalenost < target_radius:
                     skore += 1
                     target_x = random.randint(100, w - 100)
@@ -77,10 +75,14 @@ def run(should_quit=None):
         cv2.putText(img, f'SCORE: {skore}', (50, 80), cv2.FONT_HERSHEY_DUPLEX, 1.5, (0, 255, 0), 2)
         cv2.putText(img, f'TIME: {zbyvajici_cas}s', (w - 300, 80), cv2.FONT_HERSHEY_DUPLEX, 1.5, (0, 0, 255), 2)
 
-        _, buffer = cv2.imencode('.jpg', img)
-        b64_str = base64.b64encode(buffer).decode('utf-8')
-        try: eel.update_game_frame(b64_str)()
-        except Exception: pass
+        # Odeslání do webu (žádné cv2.imshow)
+        frame_counter += 1
+        if frame_counter % 2 == 0:
+            small_img = cv2.resize(img, (640, 360))
+            _, buffer = cv2.imencode('.jpg', small_img, [cv2.IMWRITE_JPEG_QUALITY, 60])
+            b64_str = base64.b64encode(buffer).decode('utf-8')
+            try: eel.update_game_frame(b64_str)()
+            except Exception: pass
 
         cv2.waitKey(1)
         if zbyvajici_cas <= 0:

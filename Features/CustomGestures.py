@@ -74,8 +74,13 @@ class CustomGestures:
                     dy = wrist.y - self.start_y
                     if dy < -self.swipe_threshold:
                         try:
-                            os.system("osk")
-                            self.current_message = "[ VIRTUAL KEYBOARD ]"
+                            import app
+                            if app.engine.mouse_active:
+                                os.system("osk")
+                                self.current_message = "[ VIRTUAL KEYBOARD ]"
+                            else:
+                                self.current_message = "[ KEYBOARD LOCKED (Turn on Mouse) ]"
+
                             self.message_time = time.time()
                             self.last_trigger_time = time.time()
                         except:
@@ -84,7 +89,6 @@ class CustomGestures:
                         break
                     elif dy > 0.05:
                         self.start_y = wrist.y
-
                 # --- STATICKÁ GESTA (Odkazy) ---
                 triggered_index = -1
                 gesture_name = ""

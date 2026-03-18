@@ -10,7 +10,7 @@ import Features.Leaderboard as LB
 import Games.MatchMeme as MatchMeme
 import Games.AirCanvas as AirCanvas
 
-eel.init('app')
+eel.init('')
 
 # --- 1. CORE ENGINE SETUP ---
 engine = CoreEngine()
@@ -19,20 +19,40 @@ engine_thread.start()
 
 
 def stop_engine():
-    """Safely stops the Core Engine to free up the camera for standalone games."""
     global engine
-    if engine.is_running:
-        print("--- PAUSING CORE ENGINE FOR GAME ---")
+    if engine and engine.is_running:
+        print("--- SHUTTING DOWN CORE ENGINE ---")
         engine.is_running = False
-        time.sleep(1)
+
+        timeout = 0
+        while engine.camera_active and timeout < 50:
+            time.sleep(0.1)
+            timeout += 1
+
+        time.sleep(1.0)
 
 
 def restart_engine():
-    """Restarts the Core Engine after a game is closed."""
     global engine, engine_thread
-    if not engine.is_running:
+    if engine is None or not engine.is_running:
         print("--- RESTARTING CORE ENGINE ---")
+
+        old_vol = engine.volume_active if engine else False
+        old_mouse = engine.mouse_active if engine else False
+        old_smart = getattr(engine, 'smartwatch_active', False)
+        old_pres = getattr(engine, 'presentation_active', False)
+        old_macro = getattr(engine, 'macro_active', False)
+        old_view = engine.camera_view_active if engine else False
+
         engine = CoreEngine()
+
+        engine.volume_active = old_vol
+        engine.mouse_active = old_mouse
+        engine.smartwatch_active = old_smart
+        engine.presentation_active = old_pres
+        engine.macro_active = old_macro
+        engine.camera_view_active = old_view
+
         engine_thread = threading.Thread(target=engine.run, daemon=True)
         engine_thread.start()
 
@@ -75,6 +95,7 @@ def run_shooter_py():
     global game_quit_flag
     game_quit_flag = False
     stop_engine()
+    time.sleep(1.5)
     game = Shooter.Shooter()
     final_score = game.run(should_quit)
     restart_engine()

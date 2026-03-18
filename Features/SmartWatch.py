@@ -1,75 +1,84 @@
+import cv2
 import math
 import time
-import mediapipe as mp
-import tkinter as tk
+import datetime
 import threading
+import tkinter as tk
 
-W, H = 1280, 720
+_show_watch = False
 
 
-def show_os_hologram(time_str):
-    """Vytvoří průhledné systémové okno s hodinami, které za 2 vteřiny samo zmizí."""
+def _watch_window_thread():
+    global _show_watch
+    root = tk.Tk()
+    root.overrideredirect(True)
+    root.attributes("-topmost", True)
+    root.attributes("-transparentcolor", "black")
+    root.config(bg="black")
 
-    def create_overlay():
-        root = tk.Tk()
-        # Odstraní okraje, křížek a lištu
-        root.overrideredirect(True)
-        # Zůstane nad všemi programy (i nad hrami a prohlížečem)
-        root.attributes('-topmost', True)
-        # Udělá z černé barvy 100% průhlednost!
-        root.attributes('-transparentcolor', 'black')
-        root.configure(bg='black')
+    w, h = 320, 130
+    sw = root.winfo_screenwidth()
+    sh = root.winfo_screenheight()
+    root.geometry(f"{w}x{h}+{sw - w - 40}+{sh - h - 80}")
 
-        # Pozice: Pravý dolní roh (přizpůsobí se monitoru)
-        ws = root.winfo_screenwidth()
-        hs = root.winfo_screenheight()
-        x = ws - 350
-        y = hs - 180
-        root.geometry(f"300x150+{x}+{y}")
+    canvas = tk.Canvas(root, width=w, height=h, bg="black", highlightthickness=0)
+    canvas.pack()
 
-        # Vykreslení textu
-        lbl_title = tk.Label(root, text="[ SYSTEM TIME ]", font=('Courier', 12, 'bold'), fg='#00f3ff', bg='black')
-        lbl_title.pack(pady=(20, 0))
+    canvas.create_rectangle(5, 5, w - 5, h - 5, outline="#00f3ff", width=3)
+    canvas.create_text(w // 2, 30, text="[ LOCAL SYSTEM TIME ]", fill="#00f3ff", font=("Courier", 13, "bold"))
+    time_id = canvas.create_text(w//2, 80, text="00:00", fill="#e0f7ff", font=("Consolas", 55, "bold"))
 
-        lbl_time = tk.Label(root, text=time_str, font=('Courier', 55, 'bold'), fg='white', bg='black')
-        lbl_time.pack()
+    root.withdraw()
+    visible = False
+    hide_timer = 0
 
-        # Samozničení po 2000 ms (2 vteřiny)
-        root.after(2000, root.destroy)
-        root.mainloop()
+    def loop():
+        nonlocal visible, hide_timer
+        global _show_watch
 
-    # Spustí se jako samostatné vlákno, aby to nezaseklo detekci kamery
-    threading.Thread(target=create_overlay, daemon=True).start()
+        if _show_watch:
+            _show_watch = False
+            hide_timer = time.time() + 3.0
+            if not visible:
+                root.deiconify()
+                visible = True
+
+        if visible:
+            canvas.itemconfig(time_id, text=datetime.datetime.now().strftime("%H:%M"))
+            if time.time() > hide_timer:
+                root.withdraw()
+                visible = False
+
+        root.after(100, loop)
+
+    loop()
+    root.mainloop()
+
+
+threading.Thread(target=_watch_window_thread, daemon=True).start()
 
 
 class SmartWatch:
-    last_trigger = 0  # Chrání před tím, aby to nespamovalo tisíc oken za vteřinu
-
-    def __init__(self):
-        self.mpHands = mp.solutions.hands
-        self.hands = self.mpHands.Hands(max_num_hands=2)
-
     @staticmethod
     def check_time(img, results, draw_surface=None):
-        if results.multi_hand_landmarks and len(results.multi_hand_landmarks) == 2:
-            h1 = results.multi_hand_landmarks[0]
-            h2 = results.multi_hand_landmarks[1]
+        global _show_watch
 
-            p1_ix, p1_iy = int(h1.landmark[8].x * W), int(h1.landmark[8].y * H)
-            p1_wx, p1_wy = int(h1.landmark[0].x * W), int(h1.landmark[0].y * H)
+        if not results.multi_hand_landmarks or len(results.multi_hand_landmarks) < 2:
+            return
 
-            p2_ix, p2_iy = int(h2.landmark[8].x * W), int(h2.landmark[8].y * H)
-            p2_wx, p2_wy = int(h2.landmark[0].x * W), int(h2.landmark[0].y * H)
+        h, w, _ = img.shape
+        hands = results.multi_hand_landmarks
 
-            hit = False
-            if math.hypot(p1_ix - p2_wx, p1_iy - p2_wy) < 60:
-                hit = True
-            elif math.hypot(p2_ix - p1_wx, p2_iy - p1_wy) < 60:
-                hit = True
+        wrist1 = hands[0].landmark[0]
+        index1 = hands[1].landmark[8]
+        dist1 = math.hypot((wrist1.x - index1.x) * w, (wrist1.y - index1.y) * h)
 
-            if hit and (time.time() - SmartWatch.last_trigger > 3):
-                SmartWatch.last_trigger = time.time()
-                current_time = time.strftime("%H:%M")
-                show_os_hologram(current_time)
+        wrist2 = hands[1].landmark[0]
+        index2 = hands[0].landmark[8]
+        dist2 = math.hypot((wrist2.x - index2.x) * w, (wrist2.y - index2.y) * h)
+
+        if dist1 < 80 or dist2 < 80:
+            _show_watch = True
+
 
 

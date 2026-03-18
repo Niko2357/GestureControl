@@ -22,18 +22,17 @@ class KarateChop:
         print("--- LAUNCHED: KARATE CHOP ---")
         cap = None
         for i in range(3):
-            temp_cap = cv2.VideoCapture(i, cv2.CAP_DSHOW)
-            if temp_cap.isOpened():
+            temp_cap = cv2.VideoCapture(i)
+            if not temp_cap.isOpened():
+                continue
+            for _ in range(15):
                 success, _ = temp_cap.read()
                 if success:
                     cap = temp_cap
                     break
-                else:
-                    temp_cap.release()
-
-        if cap is None:
-            print("CRITICAL: Camera not found!")
-            return 0
+                time.sleep(0.1)
+            if cap is not None:
+                break
 
         cap.set(3, W)
         cap.set(4, H)

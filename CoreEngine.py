@@ -7,6 +7,7 @@ from Features.CustomGestures import CustomGestures
 from Features.PresentationMode import PresentationMode
 from Features.VolumeControl import VolumeControl
 from Features.MouseControl import MouseControl
+from Features.GestureKeyboard import GestureKeyboard
 
 
 class CoreEngine:
@@ -14,20 +15,21 @@ class CoreEngine:
         self.mpHands = mp.solutions.hands
         self.hands = self.mpHands.Hands(max_num_hands=2, min_detection_confidence=0.7)
 
-        # --- TADY CHYBĚL TENTO ŘÁDEK ---
         self.macro_module = CustomGestures()
-
         self.volume_module = VolumeControl()
         self.mouse_module = MouseControl()
         self.presentation_module = PresentationMode()
+        self.keyboard_module = GestureKeyboard()
 
-        # Dashboard Toggles
         self.volume_active = False
         self.mouse_active = False
         self.smartwatch_active = False
         self.camera_view_active = False
         self.presentation_active = False
         self.macro_active = False
+
+        self.keyboard_active = False
+        self._prev_keyboard_active = False
 
         self.is_running = False
         self.camera_active = False
@@ -65,8 +67,8 @@ class CoreEngine:
             self.camera_active = True
 
             if not (self.volume_active or self.mouse_active or self.camera_view_active or
-                    getattr(self, 'smartwatch_active', False) or getattr(self, 'presentation_active', False) or getattr(
-                        self, 'macro_active', False)):
+                    getattr(self, 'smartwatch_active', False) or getattr(self, 'presentation_active', False) or
+                    getattr(self, 'macro_active', False) or self.keyboard_active):
                 time.sleep(0.05)
                 continue
 
@@ -84,14 +86,21 @@ class CoreEngine:
             if self.mouse_active:
                 self.mouse_module.process_frame(img, results)
 
+            if self.keyboard_active:
+                self.keyboard_module.process_frame(img, results)
+            elif self._prev_keyboard_active:
+                self.keyboard_module.close_hud()
+
+            self._prev_keyboard_active = self.keyboard_active
+
             if self.camera_view_active:
                 small_cam = cv2.resize(img, (640, 360))
                 _, buffer = cv2.imencode('.jpg', small_cam, [cv2.IMWRITE_JPEG_QUALITY, 60])
                 b64_str = base64.b64encode(buffer).decode('utf-8')
                 try:
                     eel.update_camera_frame(b64_str)()
-                except Exception as e:
-                    print("EEL ERROR", e)
+                except Exception:
+                    pass
 
             cv2.waitKey(1)
 
@@ -99,4 +108,3 @@ class CoreEngine:
             cap.release()
             cap = None
         self.camera_active = False
-        print("--- CORE ENGINE IS OFFLINE ---")

@@ -4,11 +4,6 @@ import numpy as np
 import math
 import time
 import random
-from Features.SmartWatch import SmartWatch
-import base64
-import eel
-
-W, H = 1280, 720
 
 
 class Shooter:
@@ -19,163 +14,150 @@ class Shooter:
         self.max_targets = 12
         self.game_duration = 60
         self.max_ammo = 6
+        self.window_name = "GESTURE HUB - SHOOTER"
+        self.w = 1280
+        self.h = 720
 
     def run(self, should_quit=None):
-        print("--- LAUNCHING: SHOOTING RANGE ---")
+        time.sleep(1.0)
+        cap = cv2.VideoCapture(0)
 
-        # POJISTKA: Krátce počkáme, než CoreEngine kameru opravdu pustí
-        time.sleep(0.5)
+        if not cap.isOpened():
+            cap = cv2.VideoCapture(1)
 
-        cap = None
-        # Zkusíme primárně index 0 s rozhraním DSHOW pro Windows
-        for i in [0, 1]:
-            temp_cap = cv2.VideoCapture(i, cv2.CAP_DSHOW)
-            if temp_cap.isOpened():
-                # Ověříme, že z kamery lezou data
-                for _ in range(10):
-                    success, _ = temp_cap.read()
-                    if success:
-                        cap = temp_cap
-                        break
-                    time.sleep(0.1)
-            if cap:
-                break
-            else:
-                temp_cap.release()
-
-        if cap is None:
-            print("CRITICAL: Camera not found or occupied by another process!")
+        if not cap.isOpened():
             return 0
 
-        # Nastavení rozlišení (Shooter počítá s 1280x720)
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, W)
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, H)
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.w)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.h)
 
-        targets, last_target_time = [], time.time()
-        spawn_rate, score, ammo = 2.0, 0, self.max_ammo
-        start_time, game_over = time.time(), False
-        prev_aim_x, prev_aim_y = W // 2, H // 2
+        targets = []
+        last_target_time = time.time()
+        spawn_rate = 2.0
+        score = 0
+        ammo = self.max_ammo
+        start_time = time.time()
+        game_over = False
+        prev_aim_x, prev_aim_y = self.w // 2, self.h // 2
         trigger_active = False
-        frame_counter = 0
 
-        while True:
-            # Kontrola externího ukončení (tlačítko v UI nebo klávesa Q)
-            if should_quit and should_quit():
-                print("--- GAME TERMINATED BY USER ---")
-                break
+        cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
+        cv2.setWindowProperty(self.window_name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+        cv2.setWindowProperty(self.window_name, cv2.WND_PROP_TOPMOST, 1)
 
-            success, img = cap.read()
-            if not success:
-                print("--- LOSS OF CAMERA SIGNAL ---")
-                break
+        try:
+            while True:
+                if should_quit and should_quit():
+                    break
 
-            img = cv2.flip(img, 1)
-            imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            results = self.hands.process(imgRGB)
+                success, img = cap.read()
+                if not success:
+                    break
 
-            game_board = np.zeros((H, W, 3), np.uint8)
+                img = cv2.flip(img, 1)
+                imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                results = self.hands.process(imgRGB)
 
-            # --- SMART WATCH ---
-            SmartWatch.check_time(img, results, draw_surface=game_board)
+                game_board = np.zeros((self.h, self.w, 3), np.uint8)
 
-            time_left = max(0, int(self.game_duration - (time.time() - start_time)))
-            if time_left == 0:
-                game_over = True
+                time_left = max(0, int(self.game_duration - (time.time() - start_time)))
+                if time_left == 0:
+                    game_over = True
 
-            if not game_over:
-                # Zaměřovač a mřížka
-                cv2.line(game_board, (0, H // 2), (W, H // 2), (30, 30, 30), 1)
-                cv2.line(game_board, (W // 2, 0), (W // 2, H), (30, 30, 30), 1)
+                if not game_over:
+                    cv2.line(game_board, (0, self.h // 2), (self.w, self.h // 2), (30, 30, 30), 1)
+                    cv2.line(game_board, (self.w // 2, 0), (self.w // 2, self.h), (30, 30, 30), 1)
 
-                aim_x, aim_y = prev_aim_x, prev_aim_y
-                shoot_command, reload_command = False, False
+                    aim_x, aim_y = prev_aim_x, prev_aim_y
+                    shoot_command, reload_command = False, False
 
-                if results.multi_hand_landmarks:
-                    for handLms in results.multi_hand_landmarks:
-                        wx = int(handLms.landmark[0].x * W)
+                    if results.multi_hand_landmarks:
+                        for handLms in results.multi_hand_landmarks:
+                            wx = int(handLms.landmark[0].x * self.w)
 
-                        # PRAVÁ RUKA = MÍŘENÍ
-                        if wx > W // 2:
-                            ix, iy = int(handLms.landmark[5].x * W), int(handLms.landmark[5].y * H)
-                            aim_x = int(prev_aim_x + (ix - prev_aim_x) / self.smoothing)
-                            aim_y = int(prev_aim_y + (iy - prev_aim_y) / self.smoothing)
-                            prev_aim_x, prev_aim_y = aim_x, aim_y
+                            if wx > self.w // 2:
+                                ix, iy = int(handLms.landmark[5].x * self.w), int(handLms.landmark[5].y * self.h)
+                                aim_x = int(prev_aim_x + (ix - prev_aim_x) / self.smoothing)
+                                aim_y = int(prev_aim_y + (iy - prev_aim_y) / self.smoothing)
+                                prev_aim_x, prev_aim_y = aim_x, aim_y
 
-                        # LEVÁ RUKA = STŘELBA / PŘEBÍJENÍ
-                        else:
-                            t_tip, i_tip = handLms.landmark[4], handLms.landmark[8]
-                            dist = math.hypot(int(i_tip.x * W) - int(t_tip.x * W), int(i_tip.y * H) - int(t_tip.y * H))
-
-                            if dist < 40:  # Gesto "Pinch" (stisk)
-                                if not trigger_active: shoot_command, trigger_active = True, True
-                                cv2.circle(game_board,
-                                           (int((t_tip.x + i_tip.x) * W / 2), int((t_tip.y + i_tip.y) * H / 2)), 15,
-                                           (0, 255, 0), cv2.FILLED)
-                            elif dist > 110:  # Otevřená dlaň
-                                trigger_active, reload_command = False, True
-                                cv2.putText(game_board, "RELOADING", (wx, 100), cv2.FONT_HERSHEY_PLAIN, 2,
-                                            (0, 255, 255), 2)
                             else:
-                                trigger_active = False
+                                t_tip, i_tip = handLms.landmark[4], handLms.landmark[8]
+                                dist = math.hypot(int(i_tip.x * self.w) - int(t_tip.x * self.w),
+                                                  int(i_tip.y * self.h) - int(t_tip.y * self.h))
 
-                # LOGIKA STŘELBY
-                if shoot_command and ammo > 0:
-                    ammo -= 1
-                    cv2.circle(game_board, (aim_x, aim_y), 40, (255, 255, 255), cv2.FILLED)
-                    for i in range(len(targets) - 1, -1, -1):
-                        tx, ty, _, _, size, _ = targets[i]
-                        if math.sqrt((aim_x - tx) ** 2 + (aim_y - ty) ** 2) < size:
-                            del targets[i]
-                            score += 100
-                            cv2.circle(game_board, (tx, ty), size + 20, (0, 255, 255), cv2.FILLED)
-                            break
+                                if dist < 40:
+                                    if not trigger_active:
+                                        shoot_command = True
+                                        trigger_active = True
+                                    cv2.circle(game_board, (
+                                    int((t_tip.x + i_tip.x) * self.w / 2), int((t_tip.y + i_tip.y) * self.h / 2)), 15,
+                                               (0, 255, 0), cv2.FILLED)
+                                elif dist > 110:
+                                    trigger_active = False
+                                    reload_command = True
+                                    cv2.putText(game_board, "RELOADING", (wx, 100), cv2.FONT_HERSHEY_PLAIN, 2,
+                                                (0, 255, 255), 2)
+                                else:
+                                    trigger_active = False
 
-                if reload_command and ammo < self.max_ammo:
-                    ammo = self.max_ammo
+                    if shoot_command and ammo > 0:
+                        ammo -= 1
+                        cv2.circle(game_board, (aim_x, aim_y), 40, (255, 255, 255), cv2.FILLED)
+                        for i in range(len(targets) - 1, -1, -1):
+                            tx, ty, dx, dy, size, color = targets[i]
+                            if math.sqrt((aim_x - tx) ** 2 + (aim_y - ty) ** 2) < size:
+                                del targets[i]
+                                score += 100
+                                cv2.circle(game_board, (tx, ty), size + 20, (0, 255, 255), cv2.FILLED)
+                                break
 
-                # TERČE
-                if len(targets) < self.max_targets and time.time() - last_target_time > spawn_rate:
-                    size = random.randint(40, 70)
-                    targets.append(
-                        [random.randint(size, W - size), random.randint(size, H - size), random.choice([-5, 5]),
-                         random.choice([-5, 5]), size,
-                         (random.randint(100, 255), random.randint(100, 255), random.randint(100, 255))])
-                    last_target_time = time.time()
+                    if reload_command and ammo < self.max_ammo:
+                        ammo = self.max_ammo
 
-                for t in targets:
-                    t[0] += t[2];
-                    t[1] += t[3]
-                    if t[0] < t[4] or t[0] > W - t[4]: t[2] *= -1
-                    if t[1] < t[4] or t[1] > H - t[4]: t[3] *= -1
-                    cv2.circle(game_board, (t[0], t[1]), t[4], t[5], cv2.FILLED)
+                    if len(targets) < self.max_targets and time.time() - last_target_time > spawn_rate:
+                        size = random.randint(40, 70)
+                        targets.append([
+                            random.randint(size, self.w - size),
+                            random.randint(size, self.h - size),
+                            random.choice([-5, 5]),
+                            random.choice([-5, 5]),
+                            size,
+                            (random.randint(100, 255), random.randint(100, 255), random.randint(100, 255))
+                        ])
+                        last_target_time = time.time()
 
-                # HUD
-                cv2.circle(game_board, (aim_x, aim_y), 20, (0, 255, 0), 2)
-                cv2.putText(game_board, f"SCORE: {score}", (30, 60), cv2.FONT_HERSHEY_DUPLEX, 1.5, (255, 255, 255), 2)
-                cv2.putText(game_board, f"TIME: {time_left}", (W - 300, 60), cv2.FONT_HERSHEY_DUPLEX, 1.5,
-                            (255, 255, 255), 2)
+                    for t in targets:
+                        t[0] += t[2]
+                        t[1] += t[3]
+                        if t[0] < t[4] or t[0] > self.w - t[4]: t[2] *= -1
+                        if t[1] < t[4] or t[1] > self.h - t[4]: t[3] *= -1
+                        cv2.circle(game_board, (t[0], t[1]), t[4], t[5], cv2.FILLED)
 
-            else:
-                cv2.putText(game_board, "GAME OVER", (W // 2 - 250, H // 2), cv2.FONT_HERSHEY_DUPLEX, 3, (0, 0, 255), 5)
-                cv2.putText(game_board, f"Final Score: {score}", (W // 2 - 200, H // 2 + 80), cv2.FONT_HERSHEY_DUPLEX,
-                            1.5, (255, 255, 255), 2)
+                    cv2.circle(game_board, (aim_x, aim_y), 20, (0, 255, 0), 2)
+                    cv2.putText(game_board, f"SCORE: {score}", (30, 60), cv2.FONT_HERSHEY_DUPLEX, 1.5, (255, 255, 255),
+                                2)
+                    cv2.putText(game_board, f"TIME: {time_left}", (self.w - 300, 60), cv2.FONT_HERSHEY_DUPLEX, 1.5,
+                                (255, 255, 255), 2)
 
-            # --- STREAMOVÁNÍ DO WEBU ---
-            frame_counter += 1
-            if frame_counter % 2 == 0:
-                print("FRAME SENT")
-                small_board = cv2.resize(game_board, (640, 360))
-                _, buffer = cv2.imencode('.jpg', small_board, [cv2.IMWRITE_JPEG_QUALITY, 55])
-                b64_str = base64.b64encode(buffer).decode('utf-8')
-                try:
-                    eel.update_camera_frame(b64_str)()
-                except Exception as e:
-                    print("EEL ERROR", e)
+                else:
+                    cv2.putText(game_board, "GAME OVER", (self.w // 2 - 250, self.h // 2), cv2.FONT_HERSHEY_DUPLEX, 3,
+                                (0, 0, 255), 5)
+                    cv2.putText(game_board, f"Final Score: {score}", (self.w // 2 - 200, self.h // 2 + 80),
+                                cv2.FONT_HERSHEY_DUPLEX, 1.5, (255, 255, 255), 2)
 
-            if cv2.waitKey(1) & 0xFF == ord('q') or game_over and frame_counter > 200:
+                cv2.imshow(self.window_name, game_board)
+                key = cv2.waitKey(1) & 0xFF
+
+                if key == 27 or (should_quit and should_quit()):
+                    break
+
                 if game_over:
-                    time.sleep(2)
-                break
+                    cv2.imshow(self.window_name, game_board)
+                    cv2.waitKey(3000)
+                    break
+        finally:
+            cap.release()
+            cv2.destroyAllWindows()
 
-        cap.release()
         return score

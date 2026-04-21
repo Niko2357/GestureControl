@@ -5,13 +5,14 @@ import subprocess
 # 1. Najde přesnou cestu k AI modelům MediaPipe u tebe v počítači
 mp_path = os.path.dirname(mediapipe.__file__)
 
-# 2. Sestaví ten obří příkaz automaticky s přesnou cestou k MediaPipe
+# 2. Sestaví obří příkaz automaticky s přesnou cestou k MediaPipe
 prikaz = [
-    "pyinstaller", "--noconfirm", "--onedir", "--windowed",
-    "--add-data", "index.html;.",
-    "--add-data", "style.css;.",
-    "--add-data", "script.js;.",
-    "--add-data", "robotic-hand.png;.",
+    "pyinstaller", "--noconfirm", "--onefile", "--windowed",
+    "--add-data", "app/index.html;.",
+    "--add-data", "app/style.css;.",
+    "--add-data", "app/script.js;.",
+    "--add-data", "app/robotic-hand.png;.",
+    "--add-data", "*.pkl;.",
     "--add-data", "Games;Games/",
     "--add-data", "Features;Features/",
     "--add-data", f"{mp_path};mediapipe/",
@@ -25,7 +26,10 @@ prikaz = [
     "--hidden-import", "CoreEngine",
     "--hidden-import", "pyautogui",
     "--hidden-import", "eel",
-    "app.py"
+    "--hidden-import", "sklearn",
+    "app/app.py"
 ]
 
+print("Spouštím PyInstaller. Může to trvat několik minut...")
 subprocess.run(prikaz)
+print("Hotovo! Tvůj .exe soubor najdeš ve složce 'dist'.")

@@ -1,15 +1,34 @@
-// --- FUNKCE PRO ZOBRAZENÍ CHYBOVÉHO OKNA ---
+let promptPromiseResolve;
+
+function getPlayerName() {
+    return new Promise((resolve) => {
+        let modal = document.getElementById('customPromptModal');
+        let input = document.getElementById('customPromptInput');
+        if(!modal) { resolve("Guest"); return; }
+        modal.classList.remove('hidden');
+        input.value = "Player1";
+        input.focus();
+        promptPromiseResolve = resolve;
+    });
+}
+
+function submitCustomPrompt() {
+    document.getElementById('customPromptModal').classList.add('hidden');
+    if (promptPromiseResolve) promptPromiseResolve(document.getElementById('customPromptInput').value);
+}
+
+function cancelCustomPrompt() {
+    document.getElementById('customPromptModal').classList.add('hidden');
+    if (promptPromiseResolve) promptPromiseResolve(null);
+}
+
 function showCameraError() {
-    const modal = document.getElementById('cameraModal');
-    modal.classList.remove('hidden');
+    document.getElementById('cameraModal').classList.remove('hidden');
 }
 
 function closeModal() {
-    const modal = document.getElementById('cameraModal');
-    modal.classList.add('hidden');
-
-    // Vrácení přepínačů zpět, pokud jsme na ně klikli bez kamery
-    const toggles = ['volumeToggle', 'smartwatchToggle', 'mouseToggle', 'presentationToggle', 'macroToggle'];
+    document.getElementById('cameraModal').classList.add('hidden');
+    const toggles = ['volumeToggle', 'smartwatchToggle', 'mouseToggle', 'presentationToggle', 'macroToggle', 'keyboardToggle'];
     toggles.forEach(id => {
         let toggle = document.getElementById(id);
         if (toggle && toggle.checked) toggle.checked = false;
@@ -18,122 +37,140 @@ function closeModal() {
 
 function closeModalOnOutsideClick(event) {
     const modalContent = document.querySelector('.modal-content');
-    if (!modalContent.contains(event.target)) {
-        closeModal();
-    }
+    if (!modalContent.contains(event.target)) closeModal();
 }
 
-// --- PŘIJÍMAČ HLAVNÍ KAMERY Z CORE ENGINE ---
 eel.expose(update_camera_frame);
 function update_camera_frame(base64_img) {
     let camImg = document.getElementById("cam-preview");
-
-    if (camImg) {
-        camImg.src = "data:image/jpeg;base64," + base64_img;
-    }
+    if (camImg) camImg.src = "data:image/jpeg;base64," + base64_img;
 }
 
-eel.expose(update_game_frame);
-async function update_game_frame(base64_img) {
-    let streamImg = document.getElementById("game-stream");
-    if (streamImg) {
-        streamImg.src = "data:image/jpeg;base64," + base64_img;
-    }
-}
-
-// --- UKONČENÍ HRY KLÁVESOU 'ESCAPE' ---
 document.addEventListener('keydown', function(event) {
     if (event.key === 'Escape') {
-        if (!document.getElementById('gameModal').classList.contains('hidden')) {
+        let gModal = document.getElementById('gameModal');
+        if (gModal && !gModal.classList.contains('hidden')) {
             eel.quit_game_py();
-            document.getElementById('gameModal').classList.add('hidden');
+            gModal.classList.add('hidden');
         }
     }
 });
 
-// Pomocná funkce pro zobrazení skóre po hře
-let currentGameForScore = "";
-let currentScore = 0;
-
-async function showScoreModal(gameName, score) {
-    currentGameForScore = gameName;
-    currentScore = score;
-    document.getElementById("finalScoreDisplay").innerText = "SCORE: " + score;
-    document.getElementById("scoreModal").classList.remove("hidden");
-
+async function viewLeaderboard(gameName, event = null, currentScore = null) {
+    if (event) event.stopPropagation();
     let topScores = await eel.get_leaderboard_py(gameName)();
     let listEl = document.getElementById("leaderboardList");
     listEl.innerHTML = "";
-
+    document.getElementById("leaderboardGameName").innerText = gameName + " - TOP SCORES";
+    let scoreDisplay = document.getElementById("finalScoreDisplay");
+    if (currentScore !== null) {
+        document.getElementById("leaderboardTitle").innerText = "[ GAME OVER ]";
+        scoreDisplay.innerText = "SCORE: " + currentScore;
+        scoreDisplay.style.display = "block";
+    } else {
+        document.getElementById("leaderboardTitle").innerText = "[ LEADERBOARD ]";
+        scoreDisplay.style.display = "none";
+    }
+    document.getElementById("scoreModal").classList.remove("hidden");
     if (topScores && topScores.length > 0) {
         topScores.forEach((entry, index) => {
-            listEl.innerHTML += `<li style="margin-bottom: 8px;"><b>${index + 1}.</b> <span style="color:var(--neon-cyan)">${entry.name}</span> (${entry.p_class}) - <b>${entry.score} pts</b></li>`;
+            listEl.innerHTML += `
+                <li style="margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 5px;">
+                    <b style="color:var(--neon-cyan)">#${index + 1}</b>
+                    <span style="color:white; margin-left:10px;">${entry.name}</span>
+                    <span style="float:right; color:var(--neon-cyan)">${entry.score} pts</span>
+                </li>`;
         });
     } else {
-        listEl.innerHTML = "<li>No scores yet. Be the first!</li>";
+        listEl.innerHTML = "<li style='text-align:center; opacity:0.5;'>No records found.</li>";
     }
 }
 
-// ==========================================
-// --- HERNÍ FUNKCE (S KONTROLOU KAMERY!) ---
-// ==========================================
+function closeScoreModal() {
+    document.getElementById("scoreModal").classList.add("hidden");
+}
+
+function closeScoreModalOnOutsideClick(event) {
+    const modalContent = document.querySelector('#scoreModal .modal-content');
+    if (!modalContent.contains(event.target)) closeScoreModal();
+}
+
+async function openGlobalLeaderboard() {
+    viewLeaderboard("SHOOTING RANGE");
+}
 
 async function runShooter() {
     if (!(await eel.check_camera_py()())) { showCameraError(); return; }
+    let playerName = await getPlayerName();
+    if (playerName === null) return;
+    if (playerName === "") playerName = "Guest";
     document.getElementById('gameModal').classList.remove('hidden');
-    document.getElementById('game-stream').src = "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
-    let score = await eel.run_shooter_py()();
+    let score = await eel.run_shooter_py(playerName)();
     document.getElementById('gameModal').classList.add('hidden');
-    if (score > 0) showScoreModal("SHOOTING RANGE", score);
+    if (score > 0) viewLeaderboard("SHOOTING RANGE", null, score);
 }
 
 async function runKarate() {
     if (!(await eel.check_camera_py()())) { showCameraError(); return; }
+    let playerName = await getPlayerName();
+    if (playerName === null) return;
+    if (playerName === "") playerName = "Guest";
     document.getElementById('gameModal').classList.remove('hidden');
-    document.getElementById('game-stream').src = "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
-    let score = await eel.run_karate_py()();
+    let score = await eel.run_karate_py(playerName)();
     document.getElementById('gameModal').classList.add('hidden');
-    if (score > 0) showScoreModal("KARATE CHOP", score);
+    if (score > 0) viewLeaderboard("KARATE CHOP", null, score);
 }
 
 async function runBubble() {
     if (!(await eel.check_camera_py()())) { showCameraError(); return; }
+    let playerName = await getPlayerName();
+    if (playerName === null) return;
+    if (playerName === "") playerName = "Guest";
     document.getElementById('gameModal').classList.remove('hidden');
-    document.getElementById('game-stream').src = "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
-    let score = await eel.run_bubble_py()();
+    let score = await eel.run_bubble_py(playerName)();
     document.getElementById('gameModal').classList.add('hidden');
-    if (score > 0) showScoreModal("BUBBLE CATCHER", score);
+    if (score > 0) viewLeaderboard("BUBBLE CATCHER", null, score);
 }
 
 async function runRPS() {
     if (!(await eel.check_camera_py()())) { showCameraError(); return; }
+    let playerName = await getPlayerName();
+    if (playerName === null) return;
+    if (playerName === "") playerName = "Guest";
     document.getElementById('gameModal').classList.remove('hidden');
-    document.getElementById('game-stream').src = "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
-    let score = await eel.run_rps_py()();
+    let score = await eel.run_rps_py(playerName)();
     document.getElementById('gameModal').classList.add('hidden');
-    if (score > 0) showScoreModal("R.P.S. GAME", score);
+    if (score > 0) viewLeaderboard("R.P.S. GAME", null, score);
 }
 
 async function runMeme() {
     if (!(await eel.check_camera_py()())) { showCameraError(); return; }
+    let playerName = await getPlayerName();
+    if (playerName === null) return;
+    if (playerName === "") playerName = "Guest";
     document.getElementById('gameModal').classList.remove('hidden');
-    document.getElementById('game-stream').src = "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
-    let score = await eel.run_meme_py()();
+    let score = await eel.run_meme_py(playerName)();
     document.getElementById('gameModal').classList.add('hidden');
-    if (score > 0) showScoreModal("MEME MATCH", score);
+    if (score > 0) viewLeaderboard("MEME MATCH", null, score);
+}
+
+async function runGesture67() {
+    if (!(await eel.check_camera_py()())) { showCameraError(); return; }
+    let playerName = await getPlayerName();
+    if (playerName === null) return;
+    if (playerName === "") playerName = "Guest";
+    document.getElementById('gameModal').classList.remove('hidden');
+    let score = await eel.run_gesture67_py(playerName)();
+    document.getElementById('gameModal').classList.add('hidden');
+    if (score > 0) viewLeaderboard("GESTURE 67", null, score);
 }
 
 async function runCanvas() {
     if (!(await eel.check_camera_py()())) { showCameraError(); return; }
     document.getElementById('gameModal').classList.remove('hidden');
-    document.getElementById('game-stream').src = "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
     await eel.run_canvas_py()();
     document.getElementById('gameModal').classList.add('hidden');
 }
-
-// ==========================================
-// --- FUNKCE V MODULECH (PŘEPÍNAČE) ---
-// ==========================================
 
 async function runVolume() {
     let toggle = document.getElementById('volumeToggle');
@@ -165,7 +202,12 @@ async function runMacros() {
     eel.toggle_macros_py(toggle.checked)();
 }
 
-// --- CALIBRATE (CAMERA VIEW) ---
+async function runKeyboard() {
+    let toggle = document.getElementById('keyboardToggle');
+    if (toggle.checked && !(await eel.check_camera_py()())) { showCameraError(); return; }
+    eel.toggle_keyboard_py(toggle.checked)();
+}
+
 async function runCameraView() {
     if (!(await eel.check_camera_py()())) { showCameraError(); return; }
     document.getElementById('cameraPreviewModal').classList.remove('hidden');
@@ -178,35 +220,18 @@ function closeCameraView() {
     eel.toggle_camera_view_py(false)();
 }
 
-// --- OSTATNÍ FUNKCE (Skóre, Makra) ---
-async function submitScore() {
-    let name = document.getElementById("playerName").value;
-    let pClass = document.getElementById("playerClass").value;
-    if (name === "") name = "Anonymous";
-    eel.save_score_py(currentGameForScore, name, pClass, currentScore)();
-    closeScoreModal();
-}
-
-function closeScoreModal() {
-    document.getElementById("scoreModal").classList.add("hidden");
-    document.getElementById("playerName").value = "";
-    document.getElementById("playerClass").value = "";
-}
-
 function openMacroConfig() { document.getElementById('macroConfigModal').classList.remove('hidden'); }
 function saveMacroConfig() {
     eel.save_macro_links_py(document.getElementById('link1').value, document.getElementById('link2').value, document.getElementById('link3').value)();
     document.getElementById('macroConfigModal').classList.add('hidden');
 }
 
-// --- STATUS KAMERY (PRAVÝ HORNÍ ROH) ---
 async function updateCameraStatus() {
     try {
         let isOnline = await eel.check_camera_py()();
         let statusBox = document.getElementById("camera-status");
         let dot = document.getElementById("cam-dot");
         let text = document.getElementById("cam-text");
-
         if (isOnline) {
             statusBox.className = "cyber-cam-status online";
             dot.className = "cam-dot-online";
@@ -217,111 +242,70 @@ async function updateCameraStatus() {
             text.innerText = "CAM OFFLINE";
         }
     } catch (e) {
-        document.getElementById("camera-status").className = "cyber-cam-status offline";
-        document.getElementById("cam-dot").className = "cam-dot-offline";
-        document.getElementById("cam-text").innerText = "SYS ERROR";
+        let statusBox = document.getElementById("camera-status");
+        if(statusBox) statusBox.className = "cyber-cam-status offline";
+        let dot = document.getElementById("cam-dot");
+        if(dot) dot.className = "cam-dot-offline";
+        let text = document.getElementById("cam-text");
+        if(text) text.innerText = "SYS ERROR";
     }
 }
 
 setInterval(updateCameraStatus, 2000);
-updateCameraStatus();
+setTimeout(updateCameraStatus, 500);
 
 async function loadSavedMacros() {
     try {
-        let links = await eel.get_macro_links_py();
+        let links = await eel.get_macro_links_py()();
         if (links && links.length === 3) {
             document.getElementById('link1').value = links[0];
             document.getElementById('link2').value = links[1];
             document.getElementById('link3').value = links[2];
         }
-    } catch (e) {
-        console.log("Makra zatím nenastavena.");
-    }
+    } catch (e) {}
 }
+setTimeout(loadSavedMacros, 1000);
 
-loadSavedMacros();
-
-// --- TUTORIAL DATABASE ---
 const tutorialData = {
-    "Shooter": {
-        title: "[ SHOOTING RANGE ]",
-        text: "> Pinch your thumb and index finger together to shoot.\n> Aim at the targets and destroy as many as possible within the time limit!\n Show your palm to reload."
-    },
-    "Karate": {
-        title: "[ KARATE CHOP ]",
-        text: "> Your weapon is your pinky finger!\n> Chop with your hand like a sword to slice the falling fruit.\n> Avoid the black bombs with an 'X', or the game ends immediately."
-    },
-    "Bubble": {
-        title: "[ BUBBLE CATCHER ]",
-        text: "> Catch the falling bubbles directly into your palm.\n> Just position your hand so the bubble falls into it."
-    },
-    "RPS": {
-        title: "[ R.P.S. GAME ]",
-        text: "> Let's play Rock, Paper, Scissors!\n> Wait for the 3.. 2.. 1.. countdown.\n> Show a fist (Rock), V-sign (Scissors), or open palm (Paper)."
-    },
-    "Meme": {
-        title: "[ MEME MATCH ]",
-        text: "> You will see a Meme face in the right corner.\n> Imitate its expression (smile, surprise, open mouth) as quickly and accurately as possible.\n> The AI will compare your face and award you a score."
-    },
-    "Canvas": {
-        title: "[ AIR CANVAS ]",
-        text: "> Raise ONLY your INDEX finger to draw.\n> Raise two fingers (Peace sign ✌️) to pause drawing and select a color from the top menu."
-    },
-    "Volume": {
-        title: "[ VOLUME CONTROL ]",
-        text: "> You need two hands for this one.\n> Show your palm on one hand and thumb up on the other.\n Gently turn (angle) your thumb up and down."
-    },
-    "SmartWatch": {
-        title: "[ SMARTWATCH ]",
-        text: "> Bring the index finger of one hand close to the wrist of your other hand.\n> A holographic watch will instantly activate and show the current time."
-    },
-    "Mouse": {
-        title: "[ MOUSE CONTROL ]",
-        text: "> Move your raised index finger to move the mouse cursor.\n> A quick pinch of your thumb and index finger acts as a left click."
-    },
-    "Presentation": {
-        title: "[ PRESENTATION SWIPE ]",
-        text: "> Perfect for PowerPoint or viewing photos.\n> Swipe your whole hand from left to right (or right to left) to move to the next/previous slide."
-    },
-    "Macro": {
-        title: "[ MACRO LINKS ]",
-        text: "> A quick hand swipe from bottom to top brings up the Virtual Keyboard.\n> Raise your fingers in a ✌️, 👍, or 🤘 shape to instantly open your saved links."
-    }
+    "Shooter": { title: "[ SHOOTING RANGE ]", text: "> Pinch your thumb and index finger together to shoot.<br>> Aim at the targets and destroy as many as possible within the time limit!" },
+    "Karate": { title: "[ KARATE CHOP ]", text: "> Your weapon is your pinky finger!<br>> Chop with your hand like a sword to slice the falling fruit." },
+    "Bubble": { title: "[ BUBBLE CATCHER ]", text: "> Catch the falling bubbles directly into your palm." },
+    "RPS": { title: "[ R.P.S. GAME ]", text: "> Let's play Rock, Paper, Scissors!<br>> Wait for the countdown." },
+    "Meme": { title: "[ MEME MATCH ]", text: "> Imitate the Meme expression quickly and accurately." },
+    "Canvas": { title: "[ AIR CANVAS ]", text: "> Raise ONLY your INDEX finger to draw.<br>> Raise two fingers (peace) to pause drawing." },
+    "Gesture67": { title: "[ SPEED PUMP ]", text: "> Throw both hands up above the green line and pull them down below the red line.<br>> You have exactly 20 seconds to do as many reps as possible!" },
+    "Volume": { title: "[ VOLUME CONTROL ]", text: "> Show your palm on one hand and thumb up on the other.<br>> Gently turn your thumb up and down." },
+    "SmartWatch": { title: "[ SMARTWATCH ]", text: "> Bring the index finger of one hand close to the wrist of your other hand." },
+    "Mouse": { title: "[ MOUSE CONTROL ]", text: "> Move your raised index finger to move the mouse cursor.<br>> Pinch your thumb and index finger to left click." },
+    "Presentation": { title: "[ PRESENTATION SWIPE ]", text: "> Swipe your whole hand from left to right to move to the next/previous slide." },
+    "Macro": { title: "[ MACRO LINKS ]", text: "> Raise your fingers in a peace, thumbs up, or rock shape to instantly open your saved links." },
+    "Keyboard": { title: "[ VIRTUAL KEYBOARD ]", text: "> Click into any text field.<br>> Show the ASL letter gesture on camera and hold it for 2 seconds." }
 };
 
 function openTutorial(moduleId, event) {
     if (event) event.stopPropagation();
-
     let data = tutorialData[moduleId];
     if (data) {
         document.getElementById('tutTitle').innerText = data.title;
-        document.getElementById('tutText').innerHTML = data.text.replace(/\n/g, "<br><br>");
+        document.getElementById('tutText').innerHTML = data.text;
         document.getElementById('tutorialModal').classList.remove('hidden');
     }
 }
 
-function closeTutorial() {
-    document.getElementById('tutorialModal').classList.add('hidden');
-}
+function closeTutorial() { document.getElementById('tutorialModal').classList.add('hidden'); }
 
 function closeTutorialOnOutsideClick(event) {
     const modalContent = document.querySelector('#tutorialModal .modal-content');
-    if (!modalContent.contains(event.target)) {
-        closeTutorial();
-    }
+    if (!modalContent.contains(event.target)) closeTutorial();
 }
 
-// --- SMARTWATCH WEB OVERLAY ---
 let smartwatchTimeout;
-
 eel.expose(show_smartwatch_web);
 function show_smartwatch_web(time_str) {
     let watchDiv = document.getElementById('smartwatchOverlay');
     document.getElementById('smartwatchTime').innerText = time_str;
-
     watchDiv.classList.remove('hidden');
     watchDiv.style.opacity = "1";
-
     clearTimeout(smartwatchTimeout);
     smartwatchTimeout = setTimeout(() => {
         watchDiv.style.opacity = "0";
@@ -329,4 +313,30 @@ function show_smartwatch_web(time_str) {
     }, 3000);
 }
 
+let keyboardHudTimeout;
+eel.expose(show_keyboard_hud_web);
+function show_keyboard_hud_web(mode, text, progress) {
+    let overlay = document.getElementById('keyboardOverlay');
+    document.getElementById('keyboardMode').innerText = "[ " + mode + " ]";
+    document.getElementById('keyboardText').innerText = text;
+    document.getElementById('keyboardProgress').style.width = (progress * 100) + "%";
+
+    overlay.classList.remove('hidden');
+    overlay.style.opacity = "1";
+
+    clearTimeout(keyboardHudTimeout);
+    keyboardHudTimeout = setTimeout(() => {
+        overlay.style.opacity = "0";
+        setTimeout(() => overlay.classList.add('hidden'), 300);
+    }, 1500);
+}
+
+eel.expose(hide_keyboard_hud_web);
+function hide_keyboard_hud_web() {
+    let overlay = document.getElementById('keyboardOverlay');
+    if (overlay) {
+        overlay.style.opacity = "0";
+        setTimeout(() => overlay.classList.add('hidden'), 300);
+    }
+}
 

@@ -9,28 +9,25 @@
     <link rel="icon" type="image/png" href="robotic-hand.png">
 </head>
 <body style="background-color: #050505; color: #e0f7ff; margin: 0; padding: 0;">
-
     <div class="cyber-overlay"></div>
     <div class="scanlines"></div>
-
     <header style="display: flex; justify-content: space-between; align-items: center; padding: 10px 20px 10px 30px; border-bottom: 2px solid rgba(255,255,255,0.1); margin-bottom: 15px; height: 60px;">
-
         <h1 style="color: white; font-family: var(--font-main); letter-spacing: 2px; margin: 0; font-size: 28px; display: flex; align-items: center; height: 100%;">GESTURE CONTROL</h1>
+        <button class="tutorial-btn" onclick="openGlobalLeaderboard()" style="margin-left: 20px; color: var(--neon-cyan); border-color: var(--neon-cyan);">
+            [ VIEW ALL RECORDS ]
+        </button>
         <div id="camera-status" class="cyber-cam-status online" style="font-size: 28px; padding: 0 15px; display: flex; align-items: center; gap: 15px; height: 100%; background: transparent; border: none; font-weight: bold; letter-spacing: 2px;">
             <span id="cam-dot" class="cam-dot-online" style="width: 14px; height: 14px;"></span>
             <span id="cam-text">CAM ONLINE</span>
         </div>
     </header>
-
     <div class="container">
-
         <div class="section-container">
             <div class="section-header">
                 <h2>GAMES</h2>
                 <span class="subtitle">INSTALLED MODULES</span>
                 <p>Select a game module below.</p>
             </div>
-
             <div class="grid-container">
                 <div class="card cyber-card red" onclick="runShooter()">
                     <div class="card-deco top-left"></div>
@@ -38,45 +35,45 @@
                         <h2>SHOOTING RANGE</h2>
                         <p>[ MODULE_01 ]</p>
                         <div class="tutorial-btn" onclick="openTutorial('Shooter', event)">[ ? ]</div>
+                        <div class="tutorial-btn" style="right: 75px; color: gold; border-color: gold;" onclick="viewLeaderboard('SHOOTING RANGE', event)">[ ★ ]</div>
                     </div>
                 </div>
-
                 <div class="card cyber-card purple" onclick="runKarate()">
                     <div class="card-deco top-left"></div>
                     <div class="card-content">
                         <h2>KARATE CHOP</h2>
                         <p>[ MODULE_02 ]</p>
                         <div class="tutorial-btn" onclick="openTutorial('Karate', event)">[ ? ]</div>
+                        <div class="tutorial-btn" style="right: 75px; color: gold; border-color: gold;" onclick="viewLeaderboard('KARATE CHOP', event)">[ ★ ]</div>
                     </div>
                 </div>
-
                 <div class="card cyber-card cyan" onclick="runBubble()">
                     <div class="card-deco top-left"></div>
                     <div class="card-content">
                         <h2>BUBBLE CATCHER</h2>
                         <p>[ MODULE_03 ]</p>
                         <div class="tutorial-btn" onclick="openTutorial('Bubble', event)">[ ? ]</div>
+                        <div class="tutorial-btn" style="right: 75px; color: gold; border-color: gold;" onclick="viewLeaderboard('BUBBLE CATCHER', event)">[ ★ ]</div>
                     </div>
                 </div>
-
                 <div class="card cyber-card red" onclick="runRPS()">
                     <div class="card-deco top-left"></div>
                     <div class="card-content">
                         <h2>R.P.S. GAME</h2>
                         <p>[ MODULE_04 ]</p>
                         <div class="tutorial-btn" onclick="openTutorial('RPS', event)">[ ? ]</div>
+                        <div class="tutorial-btn" style="right: 75px; color: gold; border-color: gold;" onclick="viewLeaderboard('R.P.S. GAME', event)">[ ★ ]</div>
                     </div>
                 </div>
-
-                <!--<div class="card cyber-card purple" onclick="runMeme()">
+                <div class="card cyber-card red" onclick="runGesture67()">
                     <div class="card-deco top-left"></div>
                     <div class="card-content">
-                        <h2>MEME MATCH</h2>
-                        <p>[ MODULE_05 ]</p>
-                        <div class="tutorial-btn" onclick="openTutorial('Meme', event)">[ ? ]</div>
+                        <h2>67 TIMER</h2>
+                        <p>[ MODULE_07 ]</p>
+                        <div class="tutorial-btn" onclick="openTutorial('Gesture67', event)">[ ? ]</div>
+                        <div class="tutorial-btn" style="right: 75px; color: gold; border-color: gold;" onclick="viewLeaderboard('GESTURE 67', event)">[ ★ ]</div>
                     </div>
-                </div> -->
-
+                </div>
                 <div class="card cyber-card cyan" onclick="runCanvas()">
                     <div class="card-deco top-left"></div>
                     <div class="card-content">
@@ -85,16 +82,26 @@
                         <div class="tutorial-btn" onclick="openTutorial('Canvas', event)">[ ? ]</div>
                     </div>
                 </div>
-
+            </div>
         </div>
-
         <div class="section-container" style="margin-top: 25px;">
             <div class="section-header">
                 <h2>FEATURES</h2>
                 <p>Toggle cybernetic systems on or off.</p>
             </div>
-
             <div class="grid-container">
+                <div class="card cyber-card cyan feature-card">
+                    <div class="card-deco top-left"></div>
+                    <div class="card-content">
+                        <div class="tutorial-btn" onclick="openTutorial('Keyboard', event)">[ ? ]</div>
+                        <h2>VIRTUAL KEYBOARD</h2>
+                        <p>[ F_05 ]</p>
+                        <label class="cyber-switch">
+                            <input type="checkbox" onchange="runKeyboard()" id="keyboardToggle">
+                            <span class="slider cyan-glow"></span>
+                        </label>
+                    </div>
+                </div>
                 <div class="card cyber-card cyan feature-card">
                     <div class="card-deco top-left"></div>
                     <div class="card-content">
@@ -138,7 +145,6 @@
                         <p>[ SYS_CALIBRATE ]</p>
                     </div>
                 </div>
-
                 <div class="cyber-card red">
                     <div class="card-deco top-left"></div>
                     <div class="card-content">
@@ -151,7 +157,6 @@
                         </label>
                     </div>
                 </div>
-
                 <div class="cyber-card purple">
                     <div class="card-deco top-left"></div>
                     <div class="card-content">
@@ -165,10 +170,7 @@
                     </div>
                 </div>
             </div>
-
         </div>
-    </div>
-
         <div class="footer">
             <p class="tech-tip">:: SYSTEM_TIP :: Tap wrist to activate chronometer (if available).</p>
             <button class="exit-btn cyber-button" onclick="window.close()">
@@ -176,17 +178,31 @@
             </button>
         </div>
     </div>
-
     <div id="gameModal" class="modal-overlay hidden" style="z-index: 2000;">
-        <div class="cyber-card purple" style="width: 90vw; height: 90vh; max-width: none; display: flex; flex-direction: column; padding: 20px;">
+        <div class="cyber-card purple" style="width: 400px; height: auto; text-align: center; padding: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
             <div class="card-deco top-left"></div>
-
-            <div style="color: rgba(0, 243, 255, 0.7); font-family: var(--font-tech); font-size: 14px; letter-spacing: 3px; border: 1px dashed rgba(0, 243, 255, 0.5); padding: 8px 20px; background: rgba(0, 243, 255, 0.05); text-transform: uppercase;">
-                    [ ESC : SYSTEM OVERRIDE ]
-            </div>
-
-            <div style="flex: 1; overflow: hidden; border: 2px solid rgba(255,255,255,0.1); border-radius: 5px; position: relative; background: #000;">
-                <img id="game-stream" src="" style="width: 100%; height: 100%; object-fit: contain;">
+            <h2 style="color: var(--neon-purple); letter-spacing: 3px; margin-bottom: 20px;">[ INITIALIZING ]</h2>
+            <div style="width: 50px; height: 50px; border: 3px solid rgba(189, 0, 255, 0.2); border-top-color: var(--neon-purple); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;"></div>
+            <p style="color: rgba(224, 247, 255, 0.7); font-size: 14px; text-transform: uppercase;">Transferring camera control...</p>
+            <p style="color: rgba(224, 247, 255, 0.4); font-size: 12px; margin-top: 10px;">Please interact with the native window.</p>
+            <style>
+                @keyframes spin { 100% { transform: rotate(360deg); } }
+            </style>
+        </div>
+    </div>
+    <div id="customPromptModal" class="modal-overlay hidden" style="z-index: 4000;">
+        <div class="modal-content cyber-card cyan" style="max-width: 400px; text-align: center;">
+            <div class="card-deco top-left"></div>
+            <h2 style="color: var(--neon-cyan); margin-bottom: 10px;">[ ENTER NICKNAME ]</h2>
+            <p style="color: rgba(224, 247, 255, 0.6); font-size: 12px; margin-bottom: 20px;">Leave blank to play as Guest</p>
+            <input type="text" id="customPromptInput" value="Player1" style="background: #111; border: 1px solid var(--neon-cyan); color: white; padding: 10px; width: 100%; margin-bottom: 20px; box-sizing: border-box; font-family: var(--font-main); text-align: center; font-size: 16px;">
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button class="cyber-button" onclick="submitCustomPrompt()" style="border-color: var(--neon-cyan); color: var(--neon-cyan); flex: 1;">
+                    START MODULE
+                </button>
+                <button class="cyber-button" onclick="cancelCustomPrompt()" style="border-color: #ff5555; color: #ff5555; flex: 1;">
+                    CANCEL
+                </button>
             </div>
         </div>
     </div>
@@ -194,7 +210,6 @@
         <div class="modal-content cyber-card red">
             <h2 style="color: var(--neon-red); text-shadow: 0 0 10px var(--neon-red);">[ CRITICAL ERROR ]</h2>
             <h3>OPTICAL SENSOR NOT FOUND</h3>
-
             <div class="terminal-text-container">
                 <div class="terminal-text">
                     <p>> Gesture tracking initialization failed...</p>
@@ -206,23 +221,19 @@
                     </ul>
                 </div>
             </div>
-
             <button class="cyber-button close-modal-btn" onclick="closeModal()">
                 <span class="btn-text">END DIAGNOSTICS</span>
             </button>
         </div>
     </div>
-
     <div id="cameraPreviewModal" class="modal-overlay hidden">
         <div class="modal-content cyber-card purple" style="max-width: 700px; text-align: center;">
             <div class="card-deco top-left"></div>
             <h2 style="color: var(--neon-purple); margin-bottom: 10px;">[ ALIGNMENT FEED ]</h2>
             <p style="color: rgba(224, 247, 255, 0.6); margin-bottom: 20px;">Please align your body and face within the center frame.</p>
-
             <div style="position: relative; display: inline-block; border: 2px solid var(--neon-purple); border-radius: 5px; overflow: hidden; background: #000; min-height: 480px; width: 640px;">
                 <img id="cam-preview" src="" style="width: 100%; height: 100%; display: block;">
             </div>
-
             <button class="cyber-button" onclick="closeCameraView()" style="margin-top: 25px; border-color: var(--neon-purple); color: var(--neon-purple);">
                 <span class="btn-text">CLOSE & SAVE ALIGNMENT</span>
             </button>
@@ -233,72 +244,62 @@
             <div class="card-deco top-left"></div>
             <h2 style="color: var(--neon-purple); margin-bottom: 15px;">[ MACRO CONFIGURATION ]</h2>
             <p style="color: rgba(224, 247, 255, 0.6); margin-bottom: 20px;">Assign URLs or App paths to hand gestures.</p>
-
             <label style="color: white; font-size: 12px;">✌️ VICTORY GESTURE:</label>
             <input type="text" id="link1" placeholder="www.youtube.com" style="background: #111; border: 1px solid var(--neon-purple); color: white; padding: 10px; width: 100%; margin-bottom: 15px; box-sizing: border-box; font-family: var(--font-main);">
-
             <label style="color: white; font-size: 12px;">👍 THUMBS UP GESTURE:</label>
             <input type="text" id="link2" placeholder="www.google.com" style="background: #111; border: 1px solid var(--neon-purple); color: white; padding: 10px; width: 100%; margin-bottom: 15px; box-sizing: border-box; font-family: var(--font-main);">
-
             <label style="color: white; font-size: 12px;">🤘 ROCK ON GESTURE:</label>
             <input type="text" id="link3" placeholder="netflix.com" style="background: #111; border: 1px solid var(--neon-purple); color: white; padding: 10px; width: 100%; margin-bottom: 25px; box-sizing: border-box; font-family: var(--font-main);">
-
             <button class="cyber-button" onclick="saveMacroConfig()" style="border-color: var(--neon-purple); color: var(--neon-purple); width: 100%;">
             SAVE & APPLY
             </button>
         </div>
     </div>
-
     <div id="tutorialModal" class="modal-overlay hidden" style="z-index: 5000;" onclick="closeTutorialOnOutsideClick(event)">
         <div class="modal-content cyber-card cyan" style="max-width: 500px; text-align: left;">
             <div class="card-deco top-left"></div>
             <h2 id="tutTitle" style="color: var(--neon-cyan); margin-bottom: 15px; border-bottom: 1px solid rgba(0,243,255,0.3); padding-bottom: 10px;">
                 [ MODULE NAME ]
             </h2>
-
             <div class="terminal-text-container" style="background: rgba(0,243,255,0.05); border-color: rgba(0,243,255,0.2);">
                 <div class="terminal-text" style="border-left-color: var(--neon-cyan); color: white;">
-                    <p id="tutText" style="font-size: 16px; line-height: 1.5; margin: 0;">
-                        text
-                    </p>
+                    <p id="tutText" style="font-size: 16px; line-height: 1.5; margin: 0;"></p>
                 </div>
             </div>
-
             <button class="cyber-button" onclick="closeTutorial()" style="border-color: var(--neon-cyan); color: var(--neon-cyan); align-self: flex-end; margin-top: 10px;">
                 CLOSE TUTORIAL
             </button>
         </div>
     </div>
-
-    <div id="scoreModal" class="modal-overlay hidden" style="z-index: 3000;">
+    <div id="scoreModal" class="modal-overlay hidden" style="z-index: 3000;" onclick="closeScoreModalOnOutsideClick(event)">
         <div class="modal-content cyber-card cyan" style="max-width: 500px; text-align: center;">
             <div class="card-deco top-left"></div>
-            <h2 style="color: var(--neon-cyan); margin-bottom: 15px;">[ GAME OVER ]</h2>
-            <h1 id="finalScoreDisplay" style="color: white; font-size: 36px; margin: 10px 0;">SCORE: 0</h1>
-
-            <div style="margin: 20px 0; text-align: left;">
-                <label style="color: var(--neon-cyan); font-size: 12px;">PLAYER NAME:</label>
-                <input type="text" id="playerName" placeholder="Enter your name" style="background: #111; border: 1px solid var(--neon-cyan); color: white; padding: 10px; width: 100%; margin-bottom: 15px; font-family: var(--font-main);">
-
-                <label style="color: var(--neon-cyan); font-size: 12px;">CLASS (Optional):</label>
-                <input type="text" id="playerClass" placeholder="e.g. 4.B" style="background: #111; border: 1px solid var(--neon-cyan); color: white; padding: 10px; width: 100%; margin-bottom: 15px; font-family: var(--font-main);">
-            </div>
-
-            <button class="cyber-button" onclick="submitScore()" style="border-color: var(--neon-cyan); color: var(--neon-cyan); width: 100%; margin-bottom: 20px;">
-                SAVE SCORE TO LEADERBOARD
-            </button>
-
-            <div id="leaderboardContainer" style="text-align: left; background: rgba(0,243,255,0.05); padding: 15px; border: 1px solid rgba(0,243,255,0.2);">
-                <h3 style="color: var(--neon-cyan); margin-top: 0; border-bottom: 1px solid rgba(0,243,255,0.3); padding-bottom: 5px;">TOP SCORES</h3>
+            <h2 id="leaderboardTitle" style="color: var(--neon-cyan); margin-bottom: 15px;">[ LEADERBOARD ]</h2>
+            <h1 id="finalScoreDisplay" style="color: white; font-size: 36px; margin: 10px 0; display: none;">SCORE: 0</h1>
+            <div id="leaderboardContainer" style="text-align: left; background: rgba(0,243,255,0.05); padding: 15px; border: 1px solid rgba(0,243,255,0.2); margin-bottom: 20px;">
+                <h3 id="leaderboardGameName" style="color: var(--neon-cyan); margin-top: 0; border-bottom: 1px solid rgba(0,243,255,0.3); padding-bottom: 5px;">TOP SCORES</h3>
                 <ul id="leaderboardList" style="list-style: none; padding: 0; color: white; font-size: 14px; margin: 0;">
-                    </ul>
+                </ul>
             </div>
-
-            <button class="cyber-button" onclick="closeScoreModal()" style="border-color: #ff5555; color: #ff5555; width: 100%; margin-top: 15px;">
-                SKIP & CLOSE
+            <button class="cyber-button" onclick="closeScoreModal()" style="border-color: #ff5555; color: #ff5555; width: 100%;">
+                CLOSE
             </button>
         </div>
     </div>
+    <div id="smartwatchOverlay" class="modal-overlay hidden" style="background: transparent; pointer-events: none;">
+        <h1 id="smartwatchTime" style="color: var(--neon-cyan); font-size: 80px; text-shadow: 0 0 20px var(--neon-cyan);"></h1>
+    </div>
+
+    <div id="keyboardOverlay" class="modal-overlay hidden" style="background: transparent; pointer-events: none; z-index: 9999;">
+        <div style="border: 2px solid var(--neon-cyan); padding: 20px 30px; background: rgba(5,5,5,0.9); box-shadow: 0 0 20px rgba(0, 243, 255, 0.4); text-align: center; border-radius: 8px; backdrop-filter: blur(5px);">
+            <div id="keyboardMode" style="color: var(--neon-cyan); font-family: var(--font-tech); font-size: 16px; margin-bottom: 15px; letter-spacing: 3px;">[ ALPHABET ]</div>
+            <div id="keyboardText" style="color: white; font-family: var(--font-header); font-size: 70px; font-weight: bold; min-width: 120px; min-height: 80px; text-shadow: 0 0 15px rgba(255,255,255,0.5); line-height: 1;">...</div>
+            <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); margin-top: 20px; border-radius: 3px; overflow: hidden;">
+                <div id="keyboardProgress" style="width: 0%; height: 100%; background: var(--neon-cyan); box-shadow: 0 0 10px var(--neon-cyan); transition: width 0.1s linear;"></div>
+            </div>
+        </div>
+    </div>
+
     <script type="text/javascript" src="eel.js"></script>
     <script src="script.js"></script>
 </body>

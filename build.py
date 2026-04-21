@@ -27,6 +27,10 @@ prikaz = [
     "--hidden-import", "pyautogui",
     "--hidden-import", "eel",
     "--hidden-import", "sklearn",
+    "--hidden-import", "sklearn.ensemble",
+    "--hidden-import", "sklearn.ensemble._forest",
+    "--hidden-import", "sklearn.tree",
+    "--hidden-import", "sklearn.tree._classes",
     "app/app.py"
 ]
 
